@@ -179,10 +179,12 @@ function generateSchedule() {
     const numActive = activePlayers.length;
     const numFoursomes = Math.floor(numActive / 4);
 
-    // Try many random arrangements — heavily prioritize unique 1v1 matchups
+    // Hierarchical scoring: 1v1 uniqueness is a hard priority,
+    // then among solutions with no repeats, optimize foursome balance
     let bestArrangement = null;
-    let bestScore = Infinity;
-    const attempts = 1500;
+    let bestMatchupPenalty = Infinity;
+    let bestFoursomePenalty = Infinity;
+    const attempts = 2000;
 
     for (let t = 0; t < attempts; t++) {
       const shuffled = shuffle(activePlayers);
@@ -191,17 +193,20 @@ function generateSchedule() {
         foursomes.push(shuffled.slice(g * 4, g * 4 + 4));
       }
 
-      let score = 0;
+      let matchupPenalty = 0;
+      let foursomePenalty = 0;
 
       for (const group of foursomes) {
-        // Foursome balance penalty
+        // Foursome balance: penalize deviation from even distribution
+        // Use cubic penalty so high counts are punished much harder
         for (let i = 0; i < group.length; i++) {
           for (let j = i + 1; j < group.length; j++) {
-            score += getFoursomeCount(group[i], group[j]) * getFoursomeCount(group[i], group[j]);
+            const count = getFoursomeCount(group[i], group[j]);
+            foursomePenalty += count * count * count;
           }
         }
 
-        // 1v1 matchup penalty — find the best pairing within this foursome
+        // 1v1 matchup: find the best pairing within this foursome
         const pairings = [
           [[group[0], group[1]], [group[2], group[3]]],
           [[group[0], group[2]], [group[1], group[3]]],
@@ -213,19 +218,23 @@ function generateSchedule() {
           let pScore = 0;
           for (const [a, b] of pairing) {
             const mc = getMatchupCount(a, b);
-            // Massive penalty for repeat matchups — this is priority #1
-            if (mc > 0) pScore += 1000 * mc * mc;
+            if (mc > 0) pScore += mc;
           }
           bestPairingScore = Math.min(bestPairingScore, pScore);
         }
-        score += bestPairingScore;
+        matchupPenalty += bestPairingScore;
       }
 
-      if (score < bestScore) {
-        bestScore = score;
+      // Hierarchical comparison: matchup repeats always trump foursome balance
+      const isBetter = matchupPenalty < bestMatchupPenalty ||
+        (matchupPenalty === bestMatchupPenalty && foursomePenalty < bestFoursomePenalty);
+
+      if (isBetter) {
+        bestMatchupPenalty = matchupPenalty;
+        bestFoursomePenalty = foursomePenalty;
         bestArrangement = foursomes;
       }
-      if (score === 0) break;
+      if (matchupPenalty === 0 && foursomePenalty === 0) break;
     }
 
     // Assign 1v1 matchups within each foursome
@@ -243,8 +252,7 @@ function generateSchedule() {
       for (const pairing of pairings) {
         let pScore = 0;
         for (const [a, b] of pairing) {
-          const mc = getMatchupCount(a, b);
-          if (mc > 0) pScore += 1000 * mc * mc;
+          pScore += getMatchupCount(a, b);
         }
         if (pScore < bestPScore) {
           bestPScore = pScore;
