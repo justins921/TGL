@@ -34,7 +34,7 @@ header h1 {
 }
 
 main {
-  max-width: 800px;
+  max-width: 900px;
   margin: 2rem auto;
   padding: 0 1rem;
 }
@@ -53,6 +53,13 @@ main {
   color: #2d5a27;
 }
 
+/* ── Form ── */
+.form-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
 .form-group {
   margin-bottom: 1.25rem;
 }
@@ -62,6 +69,12 @@ main {
   font-weight: 600;
   margin-bottom: 0.4rem;
   font-size: 0.95rem;
+}
+
+.label-hint {
+  font-weight: 400;
+  color: #6a8a64;
+  font-size: 0.85rem;
 }
 
 .form-group input[type="number"],
@@ -97,6 +110,7 @@ main {
   font-size: 0.95rem;
   background: #fafcfa;
   transition: border-color 0.2s;
+  width: 100%;
 }
 
 .player-input:focus {
@@ -105,6 +119,45 @@ main {
   box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.15);
 }
 
+/* ── Bye Assignments ── */
+.bye-assignments {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.bye-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bye-label {
+  font-size: 0.9rem;
+  min-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bye-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #c8d6c8;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #fafcfa;
+  flex: 1;
+  max-width: 160px;
+}
+
+.bye-select:focus {
+  outline: none;
+  border-color: #2d5a27;
+  box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.15);
+}
+
+/* ── Buttons ── */
 .btn-primary {
   display: inline-block;
   margin-top: 1rem;
@@ -139,21 +192,63 @@ main {
   background: #d4e8d0;
 }
 
+/* ── Schedule Output ── */
 .schedule-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .schedule-header h2 {
   margin-bottom: 0;
 }
 
+.schedule-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .hidden {
   display: none;
 }
 
+/* ── Summary Stats ── */
+.schedule-summary {
+  margin-bottom: 1.5rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.summary-stat {
+  background: #f0f7ee;
+  border: 1px solid #d4e8d0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #2d5a27;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #5a8a52;
+  margin-top: 0.15rem;
+}
+
+/* ── Week ── */
 .week {
   margin-bottom: 1.5rem;
   padding-bottom: 1.5rem;
@@ -166,46 +261,82 @@ main {
   padding-bottom: 0;
 }
 
+.week-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
 .week h3 {
   font-size: 1.1rem;
   color: #2d5a27;
-  margin-bottom: 0.75rem;
   padding-bottom: 0.25rem;
   border-bottom: 2px solid #b8d4b2;
-  display: inline-block;
 }
 
-.groups {
+.bye-tag {
+  font-size: 0.8rem;
+  background: #fff3e0;
+  color: #a66a00;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  border: 1px solid #ffe0b2;
+  font-weight: 500;
+}
+
+/* ── Foursomes ── */
+.foursomes {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1rem;
 }
 
-.group {
+.foursome {
   background: #f5f9f4;
   border-radius: 8px;
   padding: 1rem;
   border: 1px solid #dce8da;
 }
 
-.group h4 {
+.foursome h4 {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: #5a8a52;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.group ul {
-  list-style: none;
+.matchup {
+  padding: 0.5rem 0;
+  border-top: 1px solid #e4ede2;
 }
 
-.group li {
-  padding: 0.2rem 0;
+.matchup:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.matchup-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8aaa84;
+  margin-bottom: 0.15rem;
+}
+
+.matchup-vs {
   font-size: 0.95rem;
 }
 
-/* Print styles */
+.matchup-vs .vs {
+  color: #999;
+  font-size: 0.8rem;
+  margin: 0 0.25rem;
+}
+
+/* ── Print ── */
 @media print {
   body {
     background: #fff;
@@ -235,12 +366,17 @@ main {
     padding: 0;
   }
 
-  .btn-secondary {
+  .schedule-actions {
     display: none;
   }
 
   .week {
     page-break-inside: avoid;
+  }
+
+  .summary-stat {
+    border-color: #ccc;
+    background: #f9f9f9;
   }
 }
 
@@ -253,11 +389,24 @@ main {
     padding: 1.25rem;
   }
 
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
   .player-names-grid {
     grid-template-columns: 1fr;
   }
 
-  .groups {
+  .bye-assignments {
+    grid-template-columns: 1fr;
+  }
+
+  .foursomes {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
