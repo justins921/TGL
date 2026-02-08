@@ -3,21 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tuesday Golf League - Schedule Generator</title>
+  <title>Tuesday Golf League</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <nav class="nav">
-      <a href="index.html" class="nav-link active">Schedule</a>
-      <a href="analytics.html" class="nav-link">Analytics</a>
-    </nav>
-    <h1>Tuesday Golf League</h1>
-    <p class="subtitle">Schedule Generator</p>
+    <div class="header-inner">
+      <h1>Tuesday Golf League</h1>
+      <p class="subtitle">Schedule Generator</p>
+    </div>
   </header>
 
   <main>
-    <section id="setup" class="card">
+    <!-- Setup Section -->
+    <section id="setup" class="card fade-in">
       <h2>League Setup</h2>
 
       <div class="form-row">
@@ -37,23 +36,83 @@
       </div>
 
       <div class="form-group">
-        <label>Bye Week Assignments <span class="label-hint">(optional — select a week for players who know they'll be gone)</span></label>
+        <label>Bye Week Assignments <span class="label-hint">(optional — assign a week for players who know they'll be gone)</span></label>
         <div id="byeAssignments" class="bye-assignments"></div>
       </div>
 
       <button id="generateBtn" class="btn-primary">Generate Schedule</button>
     </section>
 
-    <section id="scheduleOutput" class="card hidden">
-      <div class="schedule-header">
-        <h2>League Schedule</h2>
-        <div class="schedule-actions">
-          <button id="regenerateBtn" class="btn-secondary">Regenerate</button>
-          <button id="printBtn" class="btn-secondary">Print Schedule</button>
+    <!-- Results Section -->
+    <section id="results" class="hidden">
+      <!-- Tab Nav -->
+      <div class="tab-bar card">
+        <button class="tab active" data-tab="schedule">Schedule</button>
+        <button class="tab" data-tab="analytics">Analytics</button>
+        <div class="tab-actions">
+          <button id="regenerateBtn" class="btn-ghost">Regenerate</button>
+          <button id="printBtn" class="btn-ghost">Print</button>
         </div>
       </div>
-      <div id="scheduleSummary" class="schedule-summary"></div>
-      <div id="scheduleContent"></div>
+
+      <!-- Summary Stats -->
+      <div id="scheduleSummary" class="summary-bar"></div>
+
+      <!-- Schedule Tab -->
+      <div id="tab-schedule" class="tab-content active">
+        <div id="scheduleContent"></div>
+      </div>
+
+      <!-- Analytics Tab -->
+      <div id="tab-analytics" class="tab-content">
+        <div class="card">
+          <div class="analytics-controls">
+            <label for="playerSelect">View Player</label>
+            <select id="playerSelect"></select>
+          </div>
+        </div>
+
+        <div class="analytics-grid">
+          <div class="card">
+            <h3>Weekly Breakdown</h3>
+            <div class="table-scroll">
+              <table id="weeklyTable" class="data-table">
+                <thead>
+                  <tr>
+                    <th>Week</th>
+                    <th>1v1 Opponent</th>
+                    <th>Foursome Partners</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>1v1 Matchup History</h3>
+            <p class="desc">How many times this player faced each opponent head-to-head.</p>
+            <div id="matchupFrequency"></div>
+          </div>
+
+          <div class="card">
+            <h3>Foursome History</h3>
+            <p class="desc">How many times this player shared a foursome with each other player.</p>
+            <div id="foursomeFrequency"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Full Foursome Matrix</h3>
+          <p class="desc">Times each pair of players shared a foursome across the season.</p>
+          <div class="table-scroll">
+            <table id="matrixTable" class="data-table matrix-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 

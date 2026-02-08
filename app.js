@@ -5,10 +5,29 @@ const playerNamesContainer = document.getElementById('playerNames');
 const byeAssignmentsContainer = document.getElementById('byeAssignments');
 const generateBtn = document.getElementById('generateBtn');
 const regenerateBtn = document.getElementById('regenerateBtn');
-const scheduleOutput = document.getElementById('scheduleOutput');
+const resultsSection = document.getElementById('results');
 const scheduleContent = document.getElementById('scheduleContent');
 const scheduleSummary = document.getElementById('scheduleSummary');
 const printBtn = document.getElementById('printBtn');
+const playerSelect = document.getElementById('playerSelect');
+const weeklyTableBody = document.querySelector('#weeklyTable tbody');
+const foursomeFrequency = document.getElementById('foursomeFrequency');
+const matchupFrequency = document.getElementById('matchupFrequency');
+const matrixTableHead = document.querySelector('#matrixTable thead');
+const matrixTableBody = document.querySelector('#matrixTable tbody');
+
+// Store last generated data for analytics
+let lastScheduleData = null;
+
+// ── Tabs ──
+document.querySelectorAll('.tab[data-tab]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab[data-tab]').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+  });
+});
 
 // ── Render player name inputs ──
 function renderPlayerInputs() {
@@ -38,7 +57,6 @@ function renderByeAssignments() {
   const existingValues = Array.from(existingSelects).map(s => s.value);
 
   byeAssignmentsContainer.innerHTML = '';
-
   if (count <= 0 || weeks <= 0) return;
 
   for (let i = 0; i < count; i++) {
@@ -66,9 +84,7 @@ function renderByeAssignments() {
       select.appendChild(opt);
     }
 
-    if (existingValues[i]) {
-      select.value = existingValues[i];
-    }
+    if (existingValues[i]) select.value = existingValues[i];
 
     row.appendChild(select);
     byeAssignmentsContainer.appendChild(row);
@@ -77,17 +93,13 @@ function renderByeAssignments() {
 
 function getPlayerDisplayName(index) {
   const inputs = playerNamesContainer.querySelectorAll('input');
-  if (inputs[index] && inputs[index].value.trim()) {
-    return inputs[index].value.trim();
-  }
+  if (inputs[index] && inputs[index].value.trim()) return inputs[index].value.trim();
   return `Player ${index + 1}`;
 }
 
 function getPlayerNames() {
   const inputs = playerNamesContainer.querySelectorAll('input');
-  return Array.from(inputs).map((input, i) =>
-    input.value.trim() || `Player ${i + 1}`
-  );
+  return Array.from(inputs).map((input, i) => input.value.trim() || `Player ${i + 1}`);
 }
 
 function getByeAssignments() {
@@ -130,46 +142,31 @@ function generateSchedule() {
     return;
   }
 
-  // Track how many times each pair has been in the same foursome
   const foursomeCount = {};
-  // Track how many times each pair has played 1v1
   const matchupCount = {};
-  // Track bye counts per player
   const byeCount = new Array(numPlayers).fill(0);
 
-  function getFoursomeCount(a, b) {
-    return foursomeCount[pairKey(a, b)] || 0;
-  }
-  function getMatchupCount(a, b) {
-    return matchupCount[pairKey(a, b)] || 0;
-  }
+  function getFoursomeCount(a, b) { return foursomeCount[pairKey(a, b)] || 0; }
+  function getMatchupCount(a, b) { return matchupCount[pairKey(a, b)] || 0; }
 
   const weeks = [];
 
   for (let w = 0; w < numWeeks; w++) {
-    // Determine who has a bye this week
+    // Start with admin-assigned byes
     let byePlayers = [];
-
     if (assignedByes[w] && assignedByes[w].length > 0) {
       byePlayers = [...assignedByes[w]];
     }
 
-    // Figure out how many active players we have and how many byes we need
     let activePlayers = [];
     for (let i = 0; i < numPlayers; i++) {
-      if (!byePlayers.includes(i)) {
-        activePlayers.push(i);
-      }
+      if (!byePlayers.includes(i)) activePlayers.push(i);
     }
 
-    // We need active player count to be divisible by 4
-    // Add more byes if needed (pick players with fewest byes who aren't already on bye)
+    // Need active count divisible by 4 — give byes to players with FEWEST byes
     while (activePlayers.length % 4 !== 0 && activePlayers.length > 4) {
-      // Sort active players by bye count (ascending), pick the one with fewest byes
-      // to keep it balanced — but actually pick the one who has had the most play
-      // to be fair, give byes to those with fewest byes
       const candidates = [...activePlayers].sort((a, b) => {
-        if (byeCount[a] !== byeCount[b]) return byeCount[b] - byeCount[a];
+        if (byeCount[a] !== byeCount[b]) return byeCount[a] - byeCount[b];
         return Math.random() - 0.5;
       });
       const byePlayer = candidates[0];
@@ -177,43 +174,34 @@ function generateSchedule() {
       activePlayers = activePlayers.filter(p => p !== byePlayer);
     }
 
-    // If somehow we have fewer than 4 active players, handle with ghost
-    const numActive = activePlayers.length;
-    const numFoursomes = Math.floor(numActive / 4);
-    const ghostsNeeded = (numFoursomes * 4) - numActive;
-
-    // Update bye counts
     byePlayers.forEach(p => { byeCount[p]++; });
 
-    // Try many random arrangements and pick the best one
+    const numActive = activePlayers.length;
+    const numFoursomes = Math.floor(numActive / 4);
+
+    // Try many random arrangements — heavily prioritize unique 1v1 matchups
     let bestArrangement = null;
     let bestScore = Infinity;
-    const attempts = 500;
+    const attempts = 1500;
 
     for (let t = 0; t < attempts; t++) {
       const shuffled = shuffle(activePlayers);
       const foursomes = [];
-
       for (let g = 0; g < numFoursomes; g++) {
-        const group = shuffled.slice(g * 4, g * 4 + 4);
-        foursomes.push(group);
+        foursomes.push(shuffled.slice(g * 4, g * 4 + 4));
       }
 
-      // Score this arrangement
       let score = 0;
 
       for (const group of foursomes) {
-        // Penalize repeat foursome pairings — want even distribution
+        // Foursome balance penalty
         for (let i = 0; i < group.length; i++) {
           for (let j = i + 1; j < group.length; j++) {
-            const count = getFoursomeCount(group[i], group[j]);
-            score += count * count; // Quadratic penalty to strongly discourage imbalance
+            score += getFoursomeCount(group[i], group[j]) * getFoursomeCount(group[i], group[j]);
           }
         }
 
-        // Find the best 1v1 pairing within this foursome
-        // There are 3 ways to split 4 players into 2 matchups:
-        // [0v1, 2v3], [0v2, 1v3], [0v3, 1v2]
+        // 1v1 matchup penalty — find the best pairing within this foursome
         const pairings = [
           [[group[0], group[1]], [group[2], group[3]]],
           [[group[0], group[2]], [group[1], group[3]]],
@@ -225,11 +213,12 @@ function generateSchedule() {
           let pScore = 0;
           for (const [a, b] of pairing) {
             const mc = getMatchupCount(a, b);
-            pScore += mc * mc;
+            // Massive penalty for repeat matchups — this is priority #1
+            if (mc > 0) pScore += 1000 * mc * mc;
           }
           bestPairingScore = Math.min(bestPairingScore, pScore);
         }
-        score += bestPairingScore * 10; // Weight matchup uniqueness heavily
+        score += bestPairingScore;
       }
 
       if (score < bestScore) {
@@ -239,12 +228,8 @@ function generateSchedule() {
       if (score === 0) break;
     }
 
-    // Now assign 1v1 matchups within each foursome
-    const weekData = {
-      foursomes: [],
-      byePlayers: byePlayers,
-      ghostsUsed: ghostsNeeded > 0,
-    };
+    // Assign 1v1 matchups within each foursome
+    const weekData = { foursomes: [], byePlayers };
 
     for (const group of bestArrangement) {
       const pairings = [
@@ -253,13 +238,13 @@ function generateSchedule() {
         [[group[0], group[3]], [group[1], group[2]]],
       ];
 
-      // Pick the pairing that minimizes repeat 1v1s
       let bestPairing = pairings[0];
       let bestPScore = Infinity;
       for (const pairing of pairings) {
         let pScore = 0;
         for (const [a, b] of pairing) {
-          pScore += getMatchupCount(a, b) * getMatchupCount(a, b);
+          const mc = getMatchupCount(a, b);
+          if (mc > 0) pScore += 1000 * mc * mc;
         }
         if (pScore < bestPScore) {
           bestPScore = pScore;
@@ -267,11 +252,7 @@ function generateSchedule() {
         }
       }
 
-      // Record this foursome
-      weekData.foursomes.push({
-        players: group,
-        matchups: bestPairing,
-      });
+      weekData.foursomes.push({ players: group, matchups: bestPairing });
 
       // Update tracking
       for (let i = 0; i < group.length; i++) {
@@ -289,40 +270,37 @@ function generateSchedule() {
     weeks.push(weekData);
   }
 
-  // Save to localStorage for analytics page
-  localStorage.setItem('tgl_schedule', JSON.stringify({ weeks, players }));
+  // Store for analytics
+  lastScheduleData = { weeks, players, foursomeCount, matchupCount, byeCount };
 
   renderSchedule(weeks, players, numPlayers, foursomeCount, matchupCount, byeCount);
+  renderAnalytics();
 }
 
 // ── Render Schedule ──
 function renderSchedule(weeks, players, numPlayers, foursomeCount, matchupCount, byeCount) {
   scheduleContent.innerHTML = '';
-  scheduleSummary.innerHTML = '';
-  scheduleOutput.classList.remove('hidden');
-
-  // Summary stats
+  resultsSection.classList.remove('hidden');
   renderSummary(players, numPlayers, foursomeCount, matchupCount, byeCount);
 
   weeks.forEach((weekData, weekIndex) => {
     const weekDiv = document.createElement('div');
-    weekDiv.className = 'week';
+    weekDiv.className = 'week-card card fade-in';
+    weekDiv.style.animationDelay = `${weekIndex * 0.03}s`;
 
     const weekHeader = document.createElement('div');
     weekHeader.className = 'week-header';
 
-    const weekTitle = document.createElement('h3');
-    weekTitle.textContent = `Week ${weekIndex + 1}`;
-    weekHeader.appendChild(weekTitle);
+    const weekTitle = document.createElement('div');
+    weekTitle.className = 'week-title';
+    weekTitle.innerHTML = `<span class="week-num">Week ${weekIndex + 1}</span>`;
 
     if (weekData.byePlayers.length > 0) {
-      const byeTag = document.createElement('span');
-      byeTag.className = 'bye-tag';
       const byeNames = weekData.byePlayers.map(i => players[i]).join(', ');
-      byeTag.textContent = `Bye: ${byeNames}`;
-      weekHeader.appendChild(byeTag);
+      weekTitle.innerHTML += `<span class="bye-tag">Bye: ${byeNames}</span>`;
     }
 
+    weekHeader.appendChild(weekTitle);
     weekDiv.appendChild(weekHeader);
 
     const foursomesContainer = document.createElement('div');
@@ -332,24 +310,23 @@ function renderSchedule(weeks, players, numPlayers, foursomeCount, matchupCount,
       const fDiv = document.createElement('div');
       fDiv.className = 'foursome';
 
-      const fTitle = document.createElement('h4');
+      const fTitle = document.createElement('div');
+      fTitle.className = 'foursome-title';
       fTitle.textContent = `Foursome ${fIdx + 1}`;
       fDiv.appendChild(fTitle);
 
-      // Render the two 1v1 matchups
       foursome.matchups.forEach(([a, b], mIdx) => {
         const matchDiv = document.createElement('div');
         matchDiv.className = 'matchup';
 
-        const labelSpan = document.createElement('span');
-        labelSpan.className = 'matchup-label';
-        labelSpan.textContent = `Match ${mIdx + 1}`;
-        matchDiv.appendChild(labelSpan);
-
-        const vsSpan = document.createElement('span');
-        vsSpan.className = 'matchup-vs';
-        vsSpan.innerHTML = `<strong>${players[a]}</strong> <span class="vs">vs</span> <strong>${players[b]}</strong>`;
-        matchDiv.appendChild(vsSpan);
+        matchDiv.innerHTML = `
+          <span class="matchup-label">Match ${mIdx + 1}</span>
+          <div class="matchup-players">
+            <span class="player-name">${players[a]}</span>
+            <span class="vs-badge">VS</span>
+            <span class="player-name">${players[b]}</span>
+          </div>
+        `;
 
         fDiv.appendChild(matchDiv);
       });
@@ -361,12 +338,11 @@ function renderSchedule(weeks, players, numPlayers, foursomeCount, matchupCount,
     scheduleContent.appendChild(weekDiv);
   });
 
-  scheduleOutput.scrollIntoView({ behavior: 'smooth' });
+  resultsSection.scrollIntoView({ behavior: 'smooth' });
 }
 
-// ── Summary stats ──
+// ── Summary ──
 function renderSummary(players, numPlayers, foursomeCount, matchupCount, byeCount) {
-  // Matchup distribution: how many times each pair plays 1v1
   const matchupCounts = [];
   const foursomeCounts = [];
   for (let i = 0; i < numPlayers; i++) {
@@ -377,42 +353,214 @@ function renderSummary(players, numPlayers, foursomeCount, matchupCount, byeCoun
     }
   }
 
-  const matchupMax = Math.max(...matchupCounts);
-  const matchupMin = Math.min(...matchupCounts);
-  const foursomeMax = Math.max(...foursomeCounts);
-  const foursomeMin = Math.min(...foursomeCounts);
-  const byeMax = Math.max(...byeCount);
-  const byeMin = Math.min(...byeCount);
-
   const totalPairs = matchupCounts.length;
-  const pairsWithExactlyOne = matchupCounts.filter(c => c === 1).length;
+  const pairsExactlyOnce = matchupCounts.filter(c => c === 1).length;
+  const matchupMin = Math.min(...matchupCounts);
+  const matchupMax = Math.max(...matchupCounts);
+  const foursomeMin = Math.min(...foursomeCounts);
+  const foursomeMax = Math.max(...foursomeCounts);
+  const byeMin = Math.min(...byeCount);
+  const byeMax = Math.max(...byeCount);
 
-  let html = '<div class="summary-grid">';
-  html += `<div class="summary-stat">
-    <span class="stat-value">${pairsWithExactlyOne}/${totalPairs}</span>
-    <span class="stat-label">pairs play 1v1 exactly once</span>
-  </div>`;
-  html += `<div class="summary-stat">
-    <span class="stat-value">${matchupMin}–${matchupMax}</span>
-    <span class="stat-label">1v1 matchup range per pair</span>
-  </div>`;
-  html += `<div class="summary-stat">
-    <span class="stat-value">${foursomeMin}–${foursomeMax}</span>
-    <span class="stat-label">foursome sharing range per pair</span>
-  </div>`;
-  html += `<div class="summary-stat">
-    <span class="stat-value">${byeMin}–${byeMax}</span>
-    <span class="stat-label">bye week range per player</span>
-  </div>`;
-  html += '</div>';
-
-  scheduleSummary.innerHTML = html;
+  scheduleSummary.innerHTML = `
+    <div class="stat-chip">
+      <strong>${pairsExactlyOnce}/${totalPairs}</strong> unique 1v1 matchups
+    </div>
+    <div class="stat-chip">
+      <strong>${matchupMin}-${matchupMax}</strong> 1v1 range
+    </div>
+    <div class="stat-chip">
+      <strong>${foursomeMin}-${foursomeMax}</strong> foursome range
+    </div>
+    <div class="stat-chip">
+      <strong>${byeMin}-${byeMax}</strong> byes per player
+    </div>
+  `;
 }
 
-// ── Update bye labels when player names change ──
+// ── Analytics ──
+function renderAnalytics() {
+  if (!lastScheduleData) return;
+  const { weeks, players } = lastScheduleData;
+  const numPlayers = players.length;
+
+  // Populate player dropdown
+  playerSelect.innerHTML = '';
+  players.forEach((name, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = name;
+    playerSelect.appendChild(opt);
+  });
+
+  // Pre-compute analytics
+  const playerWeekly = Array.from({ length: numPlayers }, () => []);
+  const foursomePairCount = {};
+  const matchupPairCount = {};
+
+  for (let w = 0; w < weeks.length; w++) {
+    const weekData = weeks[w];
+
+    for (const p of weekData.byePlayers) {
+      playerWeekly[p].push({ week: w + 1, opponent: null, partners: [], bye: true });
+    }
+
+    for (const foursome of weekData.foursomes) {
+      const opponentMap = {};
+      for (const [a, b] of foursome.matchups) {
+        opponentMap[a] = b;
+        opponentMap[b] = a;
+        const key = pairKey(a, b);
+        matchupPairCount[key] = (matchupPairCount[key] || 0) + 1;
+      }
+
+      for (let i = 0; i < foursome.players.length; i++) {
+        for (let j = i + 1; j < foursome.players.length; j++) {
+          const key = pairKey(foursome.players[i], foursome.players[j]);
+          foursomePairCount[key] = (foursomePairCount[key] || 0) + 1;
+        }
+      }
+
+      for (const p of foursome.players) {
+        const partners = foursome.players.filter(x => x !== p && x !== opponentMap[p]);
+        playerWeekly[p].push({ week: w + 1, opponent: opponentMap[p], partners, bye: false });
+      }
+    }
+  }
+
+  const analyticsData = { playerWeekly, foursomePairCount, matchupPairCount };
+
+  renderPlayerView(0, analyticsData);
+  renderFullMatrix(analyticsData);
+
+  playerSelect.onchange = () => {
+    renderPlayerView(parseInt(playerSelect.value), analyticsData);
+  };
+}
+
+function renderPlayerView(playerIdx, analytics) {
+  const { players } = lastScheduleData;
+  const { playerWeekly, foursomePairCount, matchupPairCount } = analytics;
+
+  // Weekly table
+  weeklyTableBody.innerHTML = '';
+  const sorted = [...playerWeekly[playerIdx]].sort((a, b) => a.week - b.week);
+
+  for (const entry of sorted) {
+    const tr = document.createElement('tr');
+
+    const weekTd = document.createElement('td');
+    weekTd.textContent = `Week ${entry.week}`;
+
+    const oppTd = document.createElement('td');
+    if (entry.bye) {
+      oppTd.innerHTML = '<span class="badge badge-bye">BYE</span>';
+    } else {
+      oppTd.textContent = players[entry.opponent];
+    }
+
+    const partnersTd = document.createElement('td');
+    partnersTd.textContent = entry.bye ? '—' : entry.partners.map(p => players[p]).join(', ');
+
+    tr.appendChild(weekTd);
+    tr.appendChild(oppTd);
+    tr.appendChild(partnersTd);
+    weeklyTableBody.appendChild(tr);
+  }
+
+  // Matchup frequency bars
+  renderFreqBars(matchupFrequency, playerIdx, players, matchupPairCount, 'matchup');
+
+  // Foursome frequency bars
+  renderFreqBars(foursomeFrequency, playerIdx, players, foursomePairCount, 'foursome');
+}
+
+function renderFreqBars(container, playerIdx, players, pairCount, type) {
+  container.innerHTML = '';
+  const entries = [];
+  for (let i = 0; i < players.length; i++) {
+    if (i === playerIdx) continue;
+    entries.push({ player: i, count: pairCount[pairKey(playerIdx, i)] || 0 });
+  }
+  entries.sort((a, b) => b.count - a.count);
+  const max = Math.max(...entries.map(e => e.count), 1);
+
+  for (const entry of entries) {
+    const row = document.createElement('div');
+    row.className = 'freq-row';
+
+    const pct = (entry.count / max) * 100;
+    row.innerHTML = `
+      <span class="freq-name">${players[entry.player]}</span>
+      <div class="freq-track">
+        <div class="freq-fill ${type}" style="width:${pct}%"></div>
+      </div>
+      <span class="freq-val">${entry.count}</span>
+    `;
+    container.appendChild(row);
+  }
+}
+
+function renderFullMatrix(analytics) {
+  const { players } = lastScheduleData;
+  const { foursomePairCount } = analytics;
+  const n = players.length;
+
+  matrixTableHead.innerHTML = '';
+  const headerRow = document.createElement('tr');
+  headerRow.appendChild(document.createElement('th'));
+
+  for (let i = 0; i < n; i++) {
+    const th = document.createElement('th');
+    th.className = 'matrix-col-header';
+    th.textContent = players[i];
+    headerRow.appendChild(th);
+  }
+  matrixTableHead.appendChild(headerRow);
+
+  let maxCount = 0;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const count = foursomePairCount[pairKey(i, j)] || 0;
+      if (count > maxCount) maxCount = count;
+    }
+  }
+
+  matrixTableBody.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const tr = document.createElement('tr');
+    const nameTd = document.createElement('td');
+    nameTd.className = 'matrix-row-header';
+    nameTd.textContent = players[i];
+    tr.appendChild(nameTd);
+
+    for (let j = 0; j < n; j++) {
+      const td = document.createElement('td');
+      td.className = 'matrix-cell';
+
+      if (i === j) {
+        td.textContent = '—';
+        td.classList.add('matrix-diag');
+      } else {
+        const count = foursomePairCount[pairKey(i, j)] || 0;
+        td.textContent = count;
+        if (maxCount > 0) {
+          const t = count / maxCount;
+          // Green gradient
+          const bg = `hsl(140, ${30 + t * 50}%, ${95 - t * 45}%)`;
+          td.style.backgroundColor = bg;
+          if (t > 0.75) td.style.color = '#fff';
+        }
+      }
+      tr.appendChild(td);
+    }
+    matrixTableBody.appendChild(tr);
+  }
+}
+
+// ── Update bye labels ──
 function updateByeLabels() {
-  const labels = byeAssignmentsContainer.querySelectorAll('.bye-label');
-  labels.forEach((label, i) => {
+  byeAssignmentsContainer.querySelectorAll('.bye-label').forEach((label, i) => {
     label.textContent = getPlayerDisplayName(i);
   });
 }
