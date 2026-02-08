@@ -18,7 +18,36 @@ header {
   background: #2d5a27;
   color: #fff;
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 1.25rem 1rem 2rem;
+}
+
+/* ── Nav ── */
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.nav-link {
+  color: #b8d4b2;
+  text-decoration: none;
+  padding: 0.4rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nav-link.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-weight: 600;
 }
 
 header h1 {
@@ -336,6 +365,160 @@ main {
   margin: 0 0.25rem;
 }
 
+/* ── Analytics ── */
+.section-desc {
+  font-size: 0.85rem;
+  color: #6a8a64;
+  margin-top: -1rem;
+  margin-bottom: 1.25rem;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.analytics-table th,
+.analytics-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e4ede2;
+}
+
+.analytics-table th {
+  font-weight: 600;
+  color: #2d5a27;
+  background: #f5f9f4;
+  position: sticky;
+  top: 0;
+}
+
+.analytics-table tbody tr:hover {
+  background: #f5f9f4;
+}
+
+.bye-indicator {
+  font-size: 0.75rem;
+  background: #fff3e0;
+  color: #a66a00;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid #ffe0b2;
+  font-weight: 500;
+}
+
+#playerSelect {
+  width: 100%;
+  max-width: 300px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #c8d6c8;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fafcfa;
+}
+
+#playerSelect:focus {
+  outline: none;
+  border-color: #2d5a27;
+  box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.15);
+}
+
+/* ── Frequency Bars ── */
+.frequency-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.freq-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.freq-name {
+  font-size: 0.85rem;
+  min-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.freq-bar-outer {
+  flex: 1;
+  height: 20px;
+  background: #edf3ec;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.freq-bar-inner {
+  height: 100%;
+  background: #4a9e3f;
+  border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+
+.freq-bar-inner.matchup-bar {
+  background: #2d7a8a;
+}
+
+.freq-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: right;
+  color: #2d5a27;
+}
+
+/* ── Full Matrix ── */
+.matrix-scroll {
+  overflow-x: auto;
+  margin: 0 -0.5rem;
+  padding: 0 0.5rem;
+}
+
+.matrix-table {
+  font-size: 0.75rem;
+  min-width: max-content;
+}
+
+.matrix-table th,
+.matrix-table td {
+  padding: 0.3rem 0.4rem;
+  text-align: center;
+  min-width: 36px;
+}
+
+.matrix-header {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.7rem;
+}
+
+.matrix-row-header {
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  position: sticky;
+  left: 0;
+  background: #fff;
+}
+
+.matrix-cell {
+  font-weight: 500;
+}
+
+.matrix-diagonal {
+  background: #f0f0f0;
+  color: #aaa;
+}
+
 /* ── Print ── */
 @media print {
   body {
@@ -355,6 +538,10 @@ main {
 
   .subtitle {
     color: #555;
+  }
+
+  .nav {
+    display: none;
   }
 
   #setup {

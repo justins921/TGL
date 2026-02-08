@@ -289,6 +289,9 @@ function generateSchedule() {
     weeks.push(weekData);
   }
 
+  // Save to localStorage for analytics page
+  localStorage.setItem('tgl_schedule', JSON.stringify({ weeks, players }));
+
   renderSchedule(weeks, players, numPlayers, foursomeCount, matchupCount, byeCount);
 }
 
