@@ -552,12 +552,17 @@ function renderFullMatrix(analytics) {
       } else {
         const count = foursomePairCount[pairKey(i, j)] || 0;
         td.textContent = count;
-        if (maxCount > 0) {
-          const t = count / maxCount;
-          // Green gradient
-          const bg = `hsl(140, ${30 + t * 50}%, ${95 - t * 45}%)`;
-          td.style.backgroundColor = bg;
-          if (t > 0.75) td.style.color = '#fff';
+        if (count < 2 || count > 4) {
+          // Red highlight for out-of-range values
+          const severity = count < 2 ? (2 - count) : (count - 4);
+          const lightness = Math.max(50, 85 - severity * 15);
+          td.style.backgroundColor = `hsl(0, 65%, ${lightness}%)`;
+          td.style.color = lightness < 65 ? '#fff' : '#7f1d1d';
+        } else {
+          // Green for ideal range (2-4)
+          const t = (count - 2) / 2; // 0 at 2, 1 at 4
+          td.style.backgroundColor = `hsl(140, ${35 + t * 25}%, ${88 - t * 20}%)`;
+          td.style.color = 'var(--green-900)';
         }
       }
       tr.appendChild(td);
