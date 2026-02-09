@@ -142,6 +142,49 @@ function generateSchedule() {
     return;
   }
 
+  // Run the entire schedule generation multiple times, keep the best
+  let bestResult = null;
+  let bestOverallScore = Infinity;
+  const fullRuns = 5;
+
+  for (let run = 0; run < fullRuns; run++) {
+    const result = generateOneSchedule(players, numWeeks, numPlayers, assignedByes);
+    // Score: count pairs outside [2,4] in foursomes
+    let outliers = 0;
+    for (let i = 0; i < numPlayers; i++) {
+      for (let j = i + 1; j < numPlayers; j++) {
+        const c = result.foursomeCount[pairKey(i, j)] || 0;
+        if (c < 2 || c > 4) outliers++;
+      }
+    }
+    // Also count 1v1 repeats
+    let matchupRepeats = 0;
+    for (let i = 0; i < numPlayers; i++) {
+      for (let j = i + 1; j < numPlayers; j++) {
+        const c = result.matchupCount[pairKey(i, j)] || 0;
+        if (c > 1) matchupRepeats += (c - 1);
+      }
+    }
+    const score = matchupRepeats * 10000 + outliers;
+    if (score < bestOverallScore) {
+      bestOverallScore = score;
+      bestResult = result;
+    }
+  }
+
+  lastScheduleData = {
+    weeks: bestResult.weeks,
+    players,
+    foursomeCount: bestResult.foursomeCount,
+    matchupCount: bestResult.matchupCount,
+    byeCount: bestResult.byeCount,
+  };
+
+  renderSchedule(bestResult.weeks, players, numPlayers, bestResult.foursomeCount, bestResult.matchupCount, bestResult.byeCount);
+  renderAnalytics();
+}
+
+function generateOneSchedule(players, numWeeks, numPlayers, assignedByes) {
   const foursomeCount = {};
   const matchupCount = {};
   const byeCount = new Array(numPlayers).fill(0);
@@ -149,10 +192,108 @@ function generateSchedule() {
   function getFoursomeCount(a, b) { return foursomeCount[pairKey(a, b)] || 0; }
   function getMatchupCount(a, b) { return matchupCount[pairKey(a, b)] || 0; }
 
+  // Score a foursome arrangement for balance
+  function scoreFoursomes(foursomes) {
+    let penalty = 0;
+    for (const group of foursomes) {
+      for (let i = 0; i < group.length; i++) {
+        for (let j = i + 1; j < group.length; j++) {
+          const after = getFoursomeCount(group[i], group[j]) + 1;
+          // Heavy penalty for going outside [2,4]
+          if (after > 4) penalty += (after - 4) * (after - 4) * 50;
+        }
+      }
+    }
+    // Also reward putting together underrepresented pairs
+    // by penalizing NOT doing so — check pairs that aren't grouped
+    const grouped = new Set();
+    for (const group of foursomes) {
+      for (let i = 0; i < group.length; i++) {
+        for (let j = i + 1; j < group.length; j++) {
+          grouped.add(pairKey(group[i], group[j]));
+        }
+      }
+    }
+    const allActive = foursomes.flat();
+    for (let i = 0; i < allActive.length; i++) {
+      for (let j = i + 1; j < allActive.length; j++) {
+        const key = pairKey(allActive[i], allActive[j]);
+        if (!grouped.has(key)) {
+          const count = getFoursomeCount(allActive[i], allActive[j]);
+          // Pairs with 0 or 1 shared foursomes that aren't grouped — mild penalty
+          if (count < 2) penalty += (2 - count) * 3;
+        }
+      }
+    }
+    return penalty;
+  }
+
+  function scoreMatchups(foursomes) {
+    let penalty = 0;
+    for (const group of foursomes) {
+      const pairings = [
+        [[group[0], group[1]], [group[2], group[3]]],
+        [[group[0], group[2]], [group[1], group[3]]],
+        [[group[0], group[3]], [group[1], group[2]]],
+      ];
+      let best = Infinity;
+      for (const pairing of pairings) {
+        let s = 0;
+        for (const [a, b] of pairing) {
+          s += getMatchupCount(a, b);
+        }
+        best = Math.min(best, s);
+      }
+      penalty += best;
+    }
+    return penalty;
+  }
+
+  // Swap optimizer: try swapping players between foursomes to improve balance
+  function optimizeSwaps(foursomes) {
+    let currentMatchup = scoreMatchups(foursomes);
+    let currentFoursome = scoreFoursomes(foursomes);
+    let improved = true;
+    let passes = 0;
+
+    while (improved && passes < 20) {
+      improved = false;
+      passes++;
+      for (let f1 = 0; f1 < foursomes.length; f1++) {
+        for (let f2 = f1 + 1; f2 < foursomes.length; f2++) {
+          for (let p1 = 0; p1 < 4; p1++) {
+            for (let p2 = 0; p2 < 4; p2++) {
+              // Try swapping
+              const tmp = foursomes[f1][p1];
+              foursomes[f1][p1] = foursomes[f2][p2];
+              foursomes[f2][p2] = tmp;
+
+              const newMatchup = scoreMatchups(foursomes);
+              const newFoursome = scoreFoursomes(foursomes);
+
+              const isBetter = newMatchup < currentMatchup ||
+                (newMatchup === currentMatchup && newFoursome < currentFoursome);
+
+              if (isBetter) {
+                currentMatchup = newMatchup;
+                currentFoursome = newFoursome;
+                improved = true;
+              } else {
+                // Swap back
+                foursomes[f2][p2] = foursomes[f1][p1];
+                foursomes[f1][p1] = tmp;
+              }
+            }
+          }
+        }
+      }
+    }
+    return foursomes;
+  }
+
   const weeks = [];
 
   for (let w = 0; w < numWeeks; w++) {
-    // Start with admin-assigned byes
     let byePlayers = [];
     if (assignedByes[w] && assignedByes[w].length > 0) {
       byePlayers = [...assignedByes[w]];
@@ -163,7 +304,6 @@ function generateSchedule() {
       if (!byePlayers.includes(i)) activePlayers.push(i);
     }
 
-    // Need active count divisible by 4 — give byes to players with FEWEST byes
     while (activePlayers.length % 4 !== 0 && activePlayers.length > 4) {
       const candidates = [...activePlayers].sort((a, b) => {
         if (byeCount[a] !== byeCount[b]) return byeCount[a] - byeCount[b];
@@ -176,66 +316,36 @@ function generateSchedule() {
 
     byePlayers.forEach(p => { byeCount[p]++; });
 
-    const numActive = activePlayers.length;
-    const numFoursomes = Math.floor(numActive / 4);
+    const numFoursomes = Math.floor(activePlayers.length / 4);
 
-    // Hierarchical scoring: 1v1 uniqueness is a hard priority,
-    // then among solutions with no repeats, optimize foursome balance
+    // Random search phase
     let bestArrangement = null;
     let bestMatchupPenalty = Infinity;
     let bestFoursomePenalty = Infinity;
-    const attempts = 2000;
 
-    for (let t = 0; t < attempts; t++) {
+    for (let t = 0; t < 1500; t++) {
       const shuffled = shuffle(activePlayers);
       const foursomes = [];
       for (let g = 0; g < numFoursomes; g++) {
         foursomes.push(shuffled.slice(g * 4, g * 4 + 4));
       }
 
-      let matchupPenalty = 0;
-      let foursomePenalty = 0;
+      const mp = scoreMatchups(foursomes);
+      const fp = scoreFoursomes(foursomes);
 
-      for (const group of foursomes) {
-        // Foursome balance: penalize deviation from even distribution
-        // Use cubic penalty so high counts are punished much harder
-        for (let i = 0; i < group.length; i++) {
-          for (let j = i + 1; j < group.length; j++) {
-            const count = getFoursomeCount(group[i], group[j]);
-            foursomePenalty += count * count * count;
-          }
-        }
-
-        // 1v1 matchup: find the best pairing within this foursome
-        const pairings = [
-          [[group[0], group[1]], [group[2], group[3]]],
-          [[group[0], group[2]], [group[1], group[3]]],
-          [[group[0], group[3]], [group[1], group[2]]],
-        ];
-
-        let bestPairingScore = Infinity;
-        for (const pairing of pairings) {
-          let pScore = 0;
-          for (const [a, b] of pairing) {
-            const mc = getMatchupCount(a, b);
-            if (mc > 0) pScore += mc;
-          }
-          bestPairingScore = Math.min(bestPairingScore, pScore);
-        }
-        matchupPenalty += bestPairingScore;
-      }
-
-      // Hierarchical comparison: matchup repeats always trump foursome balance
-      const isBetter = matchupPenalty < bestMatchupPenalty ||
-        (matchupPenalty === bestMatchupPenalty && foursomePenalty < bestFoursomePenalty);
+      const isBetter = mp < bestMatchupPenalty ||
+        (mp === bestMatchupPenalty && fp < bestFoursomePenalty);
 
       if (isBetter) {
-        bestMatchupPenalty = matchupPenalty;
-        bestFoursomePenalty = foursomePenalty;
-        bestArrangement = foursomes;
+        bestMatchupPenalty = mp;
+        bestFoursomePenalty = fp;
+        bestArrangement = foursomes.map(g => [...g]);
       }
-      if (matchupPenalty === 0 && foursomePenalty === 0) break;
+      if (mp === 0 && fp === 0) break;
     }
+
+    // Swap optimization phase — refine the best random result
+    bestArrangement = optimizeSwaps(bestArrangement);
 
     // Assign 1v1 matchups within each foursome
     const weekData = { foursomes: [], byePlayers };
@@ -262,7 +372,6 @@ function generateSchedule() {
 
       weekData.foursomes.push({ players: group, matchups: bestPairing });
 
-      // Update tracking
       for (let i = 0; i < group.length; i++) {
         for (let j = i + 1; j < group.length; j++) {
           const key = pairKey(group[i], group[j]);
@@ -278,11 +387,7 @@ function generateSchedule() {
     weeks.push(weekData);
   }
 
-  // Store for analytics
-  lastScheduleData = { weeks, players, foursomeCount, matchupCount, byeCount };
-
-  renderSchedule(weeks, players, numPlayers, foursomeCount, matchupCount, byeCount);
-  renderAnalytics();
+  return { weeks, foursomeCount, matchupCount, byeCount };
 }
 
 // ── Render Schedule ──
