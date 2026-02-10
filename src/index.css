@@ -604,6 +604,107 @@ input, select {
   color: var(--muted);
 }
 
+/* Save row */
+.save-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.save-name-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.save-btn {
+  background: var(--green-900);
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.save-btn:hover {
+  background: var(--green-800);
+}
+
+/* Saved schedule rows */
+.saved-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.saved-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.saved-row:first-child {
+  padding-top: 0;
+}
+
+.saved-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.saved-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.saved-load-btn {
+  background: var(--green-900);
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.saved-load-btn:hover {
+  background: var(--green-800);
+}
+
+.saved-delete-btn {
+  background: none;
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 18px;
+  line-height: 1;
+  transition: color 0.2s, background 0.2s;
+}
+
+.saved-delete-btn:hover {
+  color: var(--danger);
+  background: var(--danger-light);
+}
+
 /* Spinner */
 .spinner {
   display: inline-block;

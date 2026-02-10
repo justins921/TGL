@@ -46,3 +46,11 @@ export interface ScheduleStats {
   byeMin: number;
   byeMax: number;
 }
+
+export interface SavedSchedule {
+  id: string;
+  name: string;
+  savedAt: string;
+  data: ScheduleData;
+  stats: ScheduleStats;
+}

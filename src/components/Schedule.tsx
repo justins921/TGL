@@ -1,21 +1,37 @@
 import { useState, useCallback } from 'react';
 import { generateSchedule, computeStats } from '../lib/scheduleEngine';
-import type { ScheduleData } from '../lib/types';
+import type { ScheduleData, SavedSchedule } from '../lib/types';
+
+const DEFAULT_PLAYERS = [
+  'Bryon A', 'Buddha', 'David L', 'Jeff B', 'John M', 'Justin S',
+  'Mark L', 'Mike S', 'Rudy', 'Terry S', 'Tim B', 'Tim M',
+  'Tom K', 'Lee N', 'Kevin F', 'Joe D', 'Phil P',
+];
 
 interface Props {
   scheduleData: ScheduleData | null;
   setScheduleData: (data: ScheduleData) => void;
+  savedSchedules: SavedSchedule[];
+  onSave: (name: string) => void;
+  onDelete: (id: string) => void;
+  onLoad: (saved: SavedSchedule) => void;
 }
 
-export default function Schedule({ scheduleData, setScheduleData }: Props) {
+export default function Schedule({
+  scheduleData,
+  setScheduleData,
+  savedSchedules,
+  onSave,
+  onDelete,
+  onLoad,
+}: Props) {
   const [numPlayers, setNumPlayers] = useState('17');
   const [numWeeks, setNumWeeks] = useState('16');
-  const [playerNames, setPlayerNames] = useState<string[]>(
-    Array.from({ length: 17 }, () => '')
-  );
+  const [playerNames, setPlayerNames] = useState<string[]>([...DEFAULT_PLAYERS]);
   const [byeAssignments, setByeAssignments] = useState<Record<number, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSetup, setShowSetup] = useState(true);
+  const [saveName, setSaveName] = useState('');
 
   const playerCount = parseInt(numPlayers) || 0;
   const weekCount = parseInt(numWeeks) || 0;
@@ -82,6 +98,12 @@ export default function Schedule({ scheduleData, setScheduleData }: Props) {
       }
     }, 50);
   }, [playerCount, weekCount, playerNames, byeAssignments, setScheduleData]);
+
+  const handleSave = () => {
+    const name = saveName.trim() || `Schedule ${savedSchedules.length + 1}`;
+    onSave(name);
+    setSaveName('');
+  };
 
   const stats = scheduleData ? computeStats(scheduleData) : null;
 
@@ -175,6 +197,21 @@ export default function Schedule({ scheduleData, setScheduleData }: Props) {
                 <>&#9889; Generate Schedule</>
               )}
             </button>
+
+            {/* Saved Schedules */}
+            {savedSchedules.length > 0 && (
+              <div className="card">
+                <div className="card-title">Saved Schedules</div>
+                {savedSchedules.map((saved) => (
+                  <SavedScheduleRow
+                    key={saved.id}
+                    saved={saved}
+                    onLoad={onLoad}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </div>
+            )}
           </>
         ) : (
           <>
@@ -211,6 +248,23 @@ export default function Schedule({ scheduleData, setScheduleData }: Props) {
               </div>
             )}
 
+            {/* Save Schedule */}
+            <div className="card">
+              <div className="card-title">Save This Schedule</div>
+              <div className="save-row">
+                <input
+                  className="name-input save-name-input"
+                  placeholder="Schedule name (optional)"
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                />
+                <button className="save-btn" onClick={handleSave}>
+                  Save
+                </button>
+              </div>
+            </div>
+
             {/* Action Buttons */}
             <div className="action-row">
               <button
@@ -227,6 +281,21 @@ export default function Schedule({ scheduleData, setScheduleData }: Props) {
                 &#9998; Edit Setup
               </button>
             </div>
+
+            {/* Saved Schedules */}
+            {savedSchedules.length > 0 && (
+              <div className="card">
+                <div className="card-title">Saved Schedules</div>
+                {savedSchedules.map((saved) => (
+                  <SavedScheduleRow
+                    key={saved.id}
+                    saved={saved}
+                    onLoad={onLoad}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Weekly Schedule */}
             {scheduleData?.weeks.map((week, weekIndex) => (
@@ -261,5 +330,36 @@ export default function Schedule({ scheduleData, setScheduleData }: Props) {
         )}
       </div>
     </>
+  );
+}
+
+function SavedScheduleRow({
+  saved,
+  onLoad,
+  onDelete,
+}: {
+  saved: SavedSchedule;
+  onLoad: (s: SavedSchedule) => void;
+  onDelete: (id: string) => void;
+}) {
+  const { stats } = saved;
+  return (
+    <div className="saved-row">
+      <div className="saved-info">
+        <div className="saved-name">{saved.name}</div>
+        <div className="saved-meta">
+          {saved.savedAt} &middot; {stats.pairsExactlyOnce}/{stats.totalPairs} unique 1v1
+          &middot; Foursome {stats.foursomeMin}-{stats.foursomeMax}
+        </div>
+      </div>
+      <div className="saved-actions">
+        <button className="saved-load-btn" onClick={() => onLoad(saved)}>
+          Load
+        </button>
+        <button className="saved-delete-btn" onClick={() => onDelete(saved.id)}>
+          &times;
+        </button>
+      </div>
+    </div>
   );
 }
