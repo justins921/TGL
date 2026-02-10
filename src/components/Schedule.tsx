@@ -32,6 +32,7 @@ export default function Schedule({
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSetup, setShowSetup] = useState(true);
   const [saveName, setSaveName] = useState('');
+  const [justSaved, setJustSaved] = useState(false);
 
   const playerCount = parseInt(numPlayers) || 0;
   const weekCount = parseInt(numWeeks) || 0;
@@ -91,6 +92,7 @@ export default function Schedule({
         const data = generateSchedule(players, weekCount, assignedByes);
         setScheduleData(data);
         setShowSetup(false);
+        setJustSaved(false);
       } catch (e: any) {
         alert(e.message);
       } finally {
@@ -103,6 +105,7 @@ export default function Schedule({
     const name = saveName.trim() || `Schedule ${savedSchedules.length + 1}`;
     onSave(name);
     setSaveName('');
+    setJustSaved(true);
   };
 
   const stats = scheduleData ? computeStats(scheduleData) : null;
@@ -152,15 +155,19 @@ export default function Schedule({
             {playerCount > 0 && (
               <div className="card">
                 <div className="card-title">Player Names</div>
-                {Array.from({ length: playerCount }, (_, i) => (
-                  <input
-                    key={i}
-                    className="name-input"
-                    placeholder={`Player ${i + 1}`}
-                    value={playerNames[i] || ''}
-                    onChange={(e) => handlePlayerNameChange(i, e.target.value)}
-                  />
-                ))}
+                <div className="player-name-grid">
+                  {Array.from({ length: playerCount }, (_, i) => (
+                    <div key={i} className="player-name-row">
+                      <span className="player-number">{i + 1}</span>
+                      <input
+                        className="name-input"
+                        placeholder={`Player ${i + 1}`}
+                        value={playerNames[i] || ''}
+                        onChange={(e) => handlePlayerNameChange(i, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -215,6 +222,38 @@ export default function Schedule({
           </>
         ) : (
           <>
+            {/* Prominent Save Banner */}
+            <div className={`save-banner ${justSaved ? 'saved' : ''}`}>
+              {justSaved ? (
+                <div className="save-banner-success">
+                  <span className="save-check">&#10003;</span>
+                  <span>Schedule saved!</span>
+                  <button
+                    className="save-another-btn"
+                    onClick={() => setJustSaved(false)}
+                  >
+                    Save Another Copy
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="save-banner-label">Save this schedule</div>
+                  <div className="save-banner-row">
+                    <input
+                      className="save-banner-input"
+                      placeholder="Name (optional)"
+                      value={saveName}
+                      onChange={(e) => setSaveName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                    />
+                    <button className="save-banner-btn" onClick={handleSave}>
+                      Save
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
             {/* Stats Summary */}
             {stats && (
               <div className="card">
@@ -248,23 +287,6 @@ export default function Schedule({
               </div>
             )}
 
-            {/* Save Schedule */}
-            <div className="card">
-              <div className="card-title">Save This Schedule</div>
-              <div className="save-row">
-                <input
-                  className="name-input save-name-input"
-                  placeholder="Schedule name (optional)"
-                  value={saveName}
-                  onChange={(e) => setSaveName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                />
-                <button className="save-btn" onClick={handleSave}>
-                  Save
-                </button>
-              </div>
-            </div>
-
             {/* Action Buttons */}
             <div className="action-row">
               <button
@@ -272,7 +294,11 @@ export default function Schedule({
                 onClick={handleGenerate}
                 disabled={isGenerating}
               >
-                &#8635; Regenerate
+                {isGenerating ? (
+                  <span className="spinner" />
+                ) : (
+                  <>&#8635; Regenerate</>
+                )}
               </button>
               <button
                 className="action-btn secondary"
