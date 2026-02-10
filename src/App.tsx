@@ -1,47 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ScheduleData, SavedSchedule } from './lib/types';
-import { computeStats } from './lib/scheduleEngine';
+import { loadSchedules, saveSchedule, deleteSchedule } from './lib/storage';
 import Schedule from './components/Schedule';
 import Analytics from './components/Analytics';
-
-const STORAGE_KEY = 'tgl-saved-schedules';
-
-function loadSaved(): SavedSchedule[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
+import Compare from './components/Compare';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'schedule' | 'analytics'>('schedule');
+  const [activeTab, setActiveTab] = useState<'schedule' | 'analytics' | 'compare'>('schedule');
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
-  const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>(loadSaved);
+  const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>([]);
   const [saveName, setSaveName] = useState('');
   const [justSaved, setJustSaved] = useState(false);
 
+  // Load saved schedules on mount (works with both Supabase and localStorage)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(savedSchedules));
-  }, [savedSchedules]);
+    loadSchedules().then(setSavedSchedules);
+  }, []);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!scheduleData) return;
-    const name = saveName.trim() || `Schedule ${savedSchedules.length + 1}`;
-    const saved: SavedSchedule = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      name,
-      savedAt: new Date().toLocaleString(),
-      data: scheduleData,
-      stats: computeStats(scheduleData),
-    };
+    const saved = await saveSchedule(scheduleData, saveName, savedSchedules.length);
     setSavedSchedules((prev) => [saved, ...prev]);
     setSaveName('');
     setJustSaved(true);
   }, [scheduleData, saveName, savedSchedules.length]);
 
-  const handleDelete = useCallback((id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
+    await deleteSchedule(id);
     setSavedSchedules((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
@@ -69,6 +54,12 @@ function App() {
           onClick={() => setActiveTab('analytics')}
         >
           &#128202; Analytics
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'compare' ? 'active' : ''}`}
+          onClick={() => setActiveTab('compare')}
+        >
+          &#9878; Compare
         </button>
       </nav>
 
@@ -112,8 +103,14 @@ function App() {
           onLoad={handleLoad}
           onNewSchedule={handleNewSchedule}
         />
-      ) : (
+      ) : activeTab === 'analytics' ? (
         <Analytics scheduleData={scheduleData} />
+      ) : (
+        <Compare
+          savedSchedules={savedSchedules}
+          onLoad={handleLoad}
+          onDelete={handleDelete}
+        />
       )}
     </div>
   );
