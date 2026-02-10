@@ -31,6 +31,7 @@ export default function Schedule({
   const [byeAssignments, setByeAssignments] = useState<Record<number, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSetup, setShowSetup] = useState(true);
+  const [swapSource, setSwapSource] = useState<number | null>(null);
 
   const playerCount = parseInt(numPlayers) || 0;
   const weekCount = parseInt(numWeeks) || 0;
@@ -98,6 +99,28 @@ export default function Schedule({
       }
     }, 50);
   }, [playerCount, weekCount, playerNames, byeAssignments, setScheduleData, onNewSchedule]);
+
+  const handleSwapWeek = useCallback(
+    (weekIndex: number) => {
+      if (swapSource === null) {
+        setSwapSource(weekIndex);
+        return;
+      }
+      if (swapSource === weekIndex) {
+        setSwapSource(null);
+        return;
+      }
+      // Perform the swap
+      if (!scheduleData) return;
+      const newWeeks = [...scheduleData.weeks];
+      const tmp = newWeeks[swapSource];
+      newWeeks[swapSource] = newWeeks[weekIndex];
+      newWeeks[weekIndex] = tmp;
+      setScheduleData({ ...scheduleData, weeks: newWeeks });
+      setSwapSource(null);
+    },
+    [swapSource, scheduleData, setScheduleData]
+  );
 
   const stats = scheduleData ? computeStats(scheduleData) : null;
 
@@ -283,15 +306,38 @@ export default function Schedule({
             )}
 
             {/* Weekly Schedule */}
-            {scheduleData?.weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="week-card">
+            {swapSource !== null && (
+              <div className="swap-hint">
+                Tap another week to swap with Week {swapSource + 1}, or tap it again to cancel
+              </div>
+            )}
+            {scheduleData?.weeks.map((week, weekIndex) => {
+              const isSwapSource = swapSource === weekIndex;
+              const isSwapTarget = swapSource !== null && swapSource !== weekIndex;
+              return (
+              <div
+                key={weekIndex}
+                className={`week-card${isSwapSource ? ' swap-selected' : ''}${isSwapTarget ? ' swap-target' : ''}`}
+                onClick={isSwapTarget ? () => handleSwapWeek(weekIndex) : undefined}
+              >
                 <div className="week-header">
                   <div className="week-title">Week {weekIndex + 1}</div>
-                  {week.byePlayers.length > 0 && (
-                    <span className="bye-tag">
-                      Bye: {week.byePlayers.map((i) => scheduleData.players[i]).join(', ')}
-                    </span>
-                  )}
+                  <div className="week-header-actions">
+                    {week.byePlayers.length > 0 && (
+                      <span className="bye-tag">
+                        Bye: {week.byePlayers.map((i) => scheduleData.players[i]).join(', ')}
+                      </span>
+                    )}
+                    <button
+                      className={`swap-btn${isSwapSource ? ' active' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSwapWeek(weekIndex);
+                      }}
+                    >
+                      {isSwapSource ? 'Cancel' : 'Swap'}
+                    </button>
+                  </div>
                 </div>
 
                 {week.foursomes.map((foursome, fIdx) => (
@@ -310,7 +356,8 @@ export default function Schedule({
                   </div>
                 ))}
               </div>
-            ))}
+              );
+            })}
           </>
         )}
       </div>

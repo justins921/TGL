@@ -463,13 +463,65 @@ input, select {
   background: var(--text-secondary);
 }
 
+/* ── Week Swap ── */
+.swap-hint {
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e40af;
+  text-align: center;
+}
+
+.swap-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.swap-btn:hover {
+  border-color: var(--green-700);
+  color: var(--green-800);
+  background: var(--green-50);
+}
+
+.swap-btn.active {
+  background: var(--green-800);
+  border-color: var(--green-800);
+  color: #fff;
+}
+
 /* ── Week Cards ── */
 .week-card {
   background: var(--card);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.week-card.swap-selected {
+  border-color: var(--green-700);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+}
+
+.week-card.swap-target {
+  cursor: pointer;
+  border-color: #bfdbfe;
+}
+
+.week-card.swap-target:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .week-header {
@@ -479,6 +531,13 @@ input, select {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.week-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .week-title {
