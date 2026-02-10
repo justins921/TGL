@@ -19,13 +19,16 @@ function App() {
   const [activeTab, setActiveTab] = useState<'schedule' | 'analytics'>('schedule');
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>(loadSaved);
+  const [saveName, setSaveName] = useState('');
+  const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(savedSchedules));
   }, [savedSchedules]);
 
-  const handleSave = useCallback((name: string) => {
+  const handleSave = useCallback(() => {
     if (!scheduleData) return;
+    const name = saveName.trim() || `Schedule ${savedSchedules.length + 1}`;
     const saved: SavedSchedule = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       name,
@@ -34,7 +37,9 @@ function App() {
       stats: computeStats(scheduleData),
     };
     setSavedSchedules((prev) => [saved, ...prev]);
-  }, [scheduleData]);
+    setSaveName('');
+    setJustSaved(true);
+  }, [scheduleData, saveName, savedSchedules.length]);
 
   const handleDelete = useCallback((id: string) => {
     setSavedSchedules((prev) => prev.filter((s) => s.id !== id));
@@ -43,6 +48,11 @@ function App() {
   const handleLoad = useCallback((saved: SavedSchedule) => {
     setScheduleData(saved.data);
     setActiveTab('schedule');
+    setJustSaved(false);
+  }, []);
+
+  const handleNewSchedule = useCallback(() => {
+    setJustSaved(false);
   }, []);
 
   return (
@@ -62,14 +72,45 @@ function App() {
         </button>
       </nav>
 
+      {/* Persistent save bar - visible on any tab when there's schedule data */}
+      {scheduleData && (
+        <div className={`save-strip ${justSaved ? 'saved' : ''}`}>
+          {justSaved ? (
+            <div className="save-strip-success">
+              <span className="save-check">&#10003;</span>
+              <span>Schedule saved!</span>
+              <button
+                className="save-another-btn"
+                onClick={() => setJustSaved(false)}
+              >
+                Save Another Copy
+              </button>
+            </div>
+          ) : (
+            <div className="save-strip-row">
+              <input
+                className="save-strip-input"
+                placeholder="Name (optional)"
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+              />
+              <button className="save-strip-btn" onClick={handleSave}>
+                Save Schedule
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {activeTab === 'schedule' ? (
         <Schedule
           scheduleData={scheduleData}
           setScheduleData={setScheduleData}
           savedSchedules={savedSchedules}
-          onSave={handleSave}
           onDelete={handleDelete}
           onLoad={handleLoad}
+          onNewSchedule={handleNewSchedule}
         />
       ) : (
         <Analytics scheduleData={scheduleData} />

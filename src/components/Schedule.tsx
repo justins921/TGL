@@ -12,27 +12,25 @@ interface Props {
   scheduleData: ScheduleData | null;
   setScheduleData: (data: ScheduleData) => void;
   savedSchedules: SavedSchedule[];
-  onSave: (name: string) => void;
   onDelete: (id: string) => void;
   onLoad: (saved: SavedSchedule) => void;
+  onNewSchedule: () => void;
 }
 
 export default function Schedule({
   scheduleData,
   setScheduleData,
   savedSchedules,
-  onSave,
   onDelete,
   onLoad,
+  onNewSchedule,
 }: Props) {
   const [numPlayers, setNumPlayers] = useState('17');
-  const [numWeeks, setNumWeeks] = useState('16');
+  const [numWeeks, setNumWeeks] = useState('17');
   const [playerNames, setPlayerNames] = useState<string[]>([...DEFAULT_PLAYERS]);
   const [byeAssignments, setByeAssignments] = useState<Record<number, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSetup, setShowSetup] = useState(true);
-  const [saveName, setSaveName] = useState('');
-  const [justSaved, setJustSaved] = useState(false);
 
   const playerCount = parseInt(numPlayers) || 0;
   const weekCount = parseInt(numWeeks) || 0;
@@ -92,21 +90,14 @@ export default function Schedule({
         const data = generateSchedule(players, weekCount, assignedByes);
         setScheduleData(data);
         setShowSetup(false);
-        setJustSaved(false);
+        onNewSchedule();
       } catch (e: any) {
         alert(e.message);
       } finally {
         setIsGenerating(false);
       }
     }, 50);
-  }, [playerCount, weekCount, playerNames, byeAssignments, setScheduleData]);
-
-  const handleSave = () => {
-    const name = saveName.trim() || `Schedule ${savedSchedules.length + 1}`;
-    onSave(name);
-    setSaveName('');
-    setJustSaved(true);
-  };
+  }, [playerCount, weekCount, playerNames, byeAssignments, setScheduleData, onNewSchedule]);
 
   const stats = scheduleData ? computeStats(scheduleData) : null;
 
@@ -222,38 +213,6 @@ export default function Schedule({
           </>
         ) : (
           <>
-            {/* Prominent Save Banner */}
-            <div className={`save-banner ${justSaved ? 'saved' : ''}`}>
-              {justSaved ? (
-                <div className="save-banner-success">
-                  <span className="save-check">&#10003;</span>
-                  <span>Schedule saved!</span>
-                  <button
-                    className="save-another-btn"
-                    onClick={() => setJustSaved(false)}
-                  >
-                    Save Another Copy
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="save-banner-label">Save this schedule</div>
-                  <div className="save-banner-row">
-                    <input
-                      className="save-banner-input"
-                      placeholder="Name (optional)"
-                      value={saveName}
-                      onChange={(e) => setSaveName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                    />
-                    <button className="save-banner-btn" onClick={handleSave}>
-                      Save
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
             {/* Stats Summary */}
             {stats && (
               <div className="card">
