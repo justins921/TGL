@@ -15,6 +15,7 @@ interface Props {
   onDelete: (id: string) => void;
   onLoad: (saved: SavedSchedule) => void;
   onNewSchedule: () => void;
+  isAdmin: boolean;
 }
 
 export default function Schedule({
@@ -24,6 +25,7 @@ export default function Schedule({
   onDelete,
   onLoad,
   onNewSchedule,
+  isAdmin,
 }: Props) {
   const [numPlayers, setNumPlayers] = useState('17');
   const [numWeeks, setNumWeeks] = useState('17');
@@ -32,7 +34,7 @@ export default function Schedule({
   const [subNames, setSubNames] = useState<string[]>([]);
   const [newSubName, setNewSubName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showSetup, setShowSetup] = useState(true);
+  const [showSetup, setShowSetup] = useState(!scheduleData);
   const [swapSource, setSwapSource] = useState<number | null>(null);
 
   const playerCount = parseInt(numPlayers) || 0;
@@ -111,7 +113,7 @@ export default function Schedule({
         setIsGenerating(false);
       }
     }, 50);
-  }, [playerCount, weekCount, playerNames, byeAssignments, setScheduleData, onNewSchedule]);
+  }, [playerCount, weekCount, playerNames, byeAssignments, setScheduleData, onNewSchedule, subNames]);
 
   const handleSwapWeek = useCallback(
     (weekIndex: number) => {
@@ -123,7 +125,6 @@ export default function Schedule({
         setSwapSource(null);
         return;
       }
-      // Perform the swap
       if (!scheduleData) return;
       const newWeeks = [...scheduleData.weeks];
       const tmp = newWeeks[swapSource];
@@ -137,6 +138,28 @@ export default function Schedule({
 
   const stats = scheduleData ? computeStats(scheduleData) : null;
 
+  // Public viewers: if no schedule data, show a welcome message
+  if (!isAdmin && !scheduleData) {
+    return (
+      <>
+        <div className="banner">
+          <div className="banner-icon">&#127942;</div>
+          <h1>Tuesday Golf League</h1>
+          <p>Schedule Generator</p>
+        </div>
+        <div className="empty-state">
+          <div className="icon">&#128197;</div>
+          <h2>No Schedule Available</h2>
+          <p>Check back soon - the league admin will publish the schedule here</p>
+        </div>
+      </>
+    );
+  }
+
+  // Public viewers: always show schedule results (no setup)
+  // Admins: show setup or results based on state
+  const shouldShowSetup = isAdmin && showSetup && !scheduleData;
+
   return (
     <>
       {/* Banner */}
@@ -147,9 +170,9 @@ export default function Schedule({
       </div>
 
       <div className="page-content">
-        {showSetup ? (
+        {shouldShowSetup || (isAdmin && showSetup) ? (
           <>
-            {/* League Setup */}
+            {/* League Setup - Admin only */}
             <div className="card">
               <div className="card-title">League Setup</div>
               <div className="form-row">
@@ -277,6 +300,7 @@ export default function Schedule({
                     saved={saved}
                     onLoad={onLoad}
                     onDelete={onDelete}
+                    isAdmin={isAdmin}
                   />
                 ))}
               </div>
@@ -329,26 +353,28 @@ export default function Schedule({
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="action-row">
-              <button
-                className="action-btn primary"
-                onClick={handleGenerate}
-                disabled={isGenerating}
-              >
-                {isGenerating ? (
-                  <span className="spinner" />
-                ) : (
-                  <>&#8635; Regenerate</>
-                )}
-              </button>
-              <button
-                className="action-btn secondary"
-                onClick={() => setShowSetup(true)}
-              >
-                &#9998; Edit Setup
-              </button>
-            </div>
+            {/* Action Buttons - Admin only */}
+            {isAdmin && (
+              <div className="action-row">
+                <button
+                  className="action-btn primary"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? (
+                    <span className="spinner" />
+                  ) : (
+                    <>&#8635; Regenerate</>
+                  )}
+                </button>
+                <button
+                  className="action-btn secondary"
+                  onClick={() => setShowSetup(true)}
+                >
+                  &#9998; Edit Setup
+                </button>
+              </div>
+            )}
 
             {/* Saved Schedules */}
             {savedSchedules.length > 0 && (
@@ -360,20 +386,21 @@ export default function Schedule({
                     saved={saved}
                     onLoad={onLoad}
                     onDelete={onDelete}
+                    isAdmin={isAdmin}
                   />
                 ))}
               </div>
             )}
 
             {/* Weekly Schedule */}
-            {swapSource !== null && (
+            {isAdmin && swapSource !== null && (
               <div className="swap-hint">
                 Tap another week to swap with Week {swapSource + 1}, or tap it again to cancel
               </div>
             )}
             {scheduleData?.weeks.map((week, weekIndex) => {
               const isSwapSource = swapSource === weekIndex;
-              const isSwapTarget = swapSource !== null && swapSource !== weekIndex;
+              const isSwapTarget = isAdmin && swapSource !== null && swapSource !== weekIndex;
               return (
               <div
                 key={weekIndex}
@@ -388,15 +415,17 @@ export default function Schedule({
                         Bye: {week.byePlayers.map((i) => scheduleData.players[i]).join(', ')}
                       </span>
                     )}
-                    <button
-                      className={`swap-btn${isSwapSource ? ' active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSwapWeek(weekIndex);
-                      }}
-                    >
-                      {isSwapSource ? 'Cancel' : 'Swap'}
-                    </button>
+                    {isAdmin && (
+                      <button
+                        className={`swap-btn${isSwapSource ? ' active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSwapWeek(weekIndex);
+                        }}
+                      >
+                        {isSwapSource ? 'Cancel' : 'Swap'}
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -429,10 +458,12 @@ function SavedScheduleRow({
   saved,
   onLoad,
   onDelete,
+  isAdmin,
 }: {
   saved: SavedSchedule;
   onLoad: (s: SavedSchedule) => void;
   onDelete: (id: string) => void;
+  isAdmin: boolean;
 }) {
   const { stats } = saved;
   return (
@@ -448,9 +479,11 @@ function SavedScheduleRow({
         <button className="saved-load-btn" onClick={() => onLoad(saved)}>
           Load
         </button>
-        <button className="saved-delete-btn" onClick={() => onDelete(saved.id)}>
-          &times;
-        </button>
+        {isAdmin && (
+          <button className="saved-delete-btn" onClick={() => onDelete(saved.id)}>
+            &times;
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1017,6 +1017,150 @@ input, select {
   to { transform: rotate(360deg); }
 }
 
+/* ── Admin Button in Tab Bar ── */
+.tab-btn.admin-btn {
+  flex: 0;
+  padding: 16px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+  border-bottom-color: transparent !important;
+  color: rgba(255,255,255,0.4);
+}
+
+.tab-btn.admin-btn:hover {
+  color: rgba(255,255,255,0.7);
+}
+
+/* ── Login Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.modal-close {
+  background: none;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.modal-close:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.login-field {
+  margin-bottom: 14px;
+}
+
+.login-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.login-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 15px;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: var(--green-700);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+}
+
+.login-error {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.login-submit {
+  width: 100%;
+  background: linear-gradient(135deg, var(--green-800), var(--green-700));
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-md);
+  margin-top: 4px;
+}
+
+.login-submit:hover:not(:disabled) {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+.login-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Compare Tab ── */
 .compare-select-actions {
   display: flex;

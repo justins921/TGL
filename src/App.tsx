@@ -1,20 +1,30 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ScheduleData, SavedSchedule } from './lib/types';
 import { loadSchedules, saveSchedule, deleteSchedule } from './lib/storage';
+import { AuthProvider, useAuth } from './lib/auth';
 import Schedule from './components/Schedule';
 import Analytics from './components/Analytics';
 import Compare from './components/Compare';
+import AdminLogin from './components/AdminLogin';
 
-function App() {
+function AppContent() {
+  const { isAdmin, user, signOut, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<'schedule' | 'analytics' | 'compare'>('schedule');
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>([]);
   const [saveName, setSaveName] = useState('');
   const [justSaved, setJustSaved] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
 
-  // Load saved schedules on mount (works with both Supabase and localStorage)
+  // Load saved schedules on mount
   useEffect(() => {
-    loadSchedules().then(setSavedSchedules);
+    loadSchedules().then((schedules) => {
+      setSavedSchedules(schedules);
+      // Auto-load the most recent saved schedule for public viewers
+      if (schedules.length > 0 && !scheduleData) {
+        setScheduleData(schedules[0].data);
+      }
+    });
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -40,6 +50,8 @@ function App() {
     setJustSaved(false);
   }, []);
 
+  if (authLoading) return null;
+
   return (
     <div>
       <nav className="tab-bar">
@@ -61,10 +73,16 @@ function App() {
         >
           &#9878; Compare
         </button>
+        <button
+          className="tab-btn admin-btn"
+          onClick={() => (user ? signOut() : setShowLogin(true))}
+        >
+          {user ? <>&#128275; Logout</> : <>&#128274; Admin</>}
+        </button>
       </nav>
 
-      {/* Persistent save bar - visible on any tab when there's schedule data */}
-      {scheduleData && (
+      {/* Persistent save bar - admin only */}
+      {isAdmin && scheduleData && (
         <div className={`save-strip ${justSaved ? 'saved' : ''}`}>
           {justSaved ? (
             <div className="save-strip-success">
@@ -102,6 +120,7 @@ function App() {
           onDelete={handleDelete}
           onLoad={handleLoad}
           onNewSchedule={handleNewSchedule}
+          isAdmin={isAdmin}
         />
       ) : activeTab === 'analytics' ? (
         <Analytics scheduleData={scheduleData} />
@@ -110,10 +129,19 @@ function App() {
           savedSchedules={savedSchedules}
           onLoad={handleLoad}
           onDelete={handleDelete}
+          isAdmin={isAdmin}
         />
       )}
+
+      {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}

@@ -5,9 +5,10 @@ interface Props {
   savedSchedules: SavedSchedule[];
   onLoad: (saved: SavedSchedule) => void;
   onDelete: (id: string) => void;
+  isAdmin: boolean;
 }
 
-export default function Compare({ savedSchedules, onLoad, onDelete }: Props) {
+export default function Compare({ savedSchedules, onLoad, onDelete, isAdmin }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   if (savedSchedules.length === 0) {
@@ -87,20 +88,22 @@ export default function Compare({ savedSchedules, onLoad, onDelete }: Props) {
                 >
                   Use
                 </button>
-                <button
-                  className="saved-delete-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(saved.id);
-                    setSelectedIds((prev) => {
-                      const next = new Set(prev);
-                      next.delete(saved.id);
-                      return next;
-                    });
-                  }}
-                >
-                  &times;
-                </button>
+                {isAdmin && (
+                  <button
+                    className="saved-delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(saved.id);
+                      setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        next.delete(saved.id);
+                        return next;
+                      });
+                    }}
+                  >
+                    &times;
+                  </button>
+                )}
               </div>
             </div>
           );

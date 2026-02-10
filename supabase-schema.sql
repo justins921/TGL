@@ -1,7 +1,7 @@
 -- TGL Supabase Schema
 -- Run this in your Supabase SQL Editor to set up the database
 
--- Schedules table: stores saved schedules
+-- ── Schedules table ──
 create table if not exists schedules (
   id text primary key,
   name text not null,
@@ -10,19 +10,42 @@ create table if not exists schedules (
   stats jsonb not null
 );
 
--- Index for ordering by save date
 create index if not exists schedules_saved_at_idx on schedules (saved_at desc);
 
--- Enable Row Level Security (RLS)
--- For now, allow all operations (no auth required).
--- When you add authentication later, update these policies.
+-- ── Row Level Security ──
+-- Public users can read schedules (no login required)
+-- Only authenticated users (admins) can insert, update, delete
 alter table schedules enable row level security;
 
-create policy "Allow all reads" on schedules
+-- Anyone can read
+create policy "Public read access" on schedules
   for select using (true);
 
-create policy "Allow all inserts" on schedules
-  for insert with check (true);
+-- Only authenticated users can insert
+create policy "Authenticated insert" on schedules
+  for insert with check (auth.role() = 'authenticated');
 
-create policy "Allow all deletes" on schedules
-  for delete using (true);
+-- Only authenticated users can update
+create policy "Authenticated update" on schedules
+  for update using (auth.role() = 'authenticated');
+
+-- Only authenticated users can delete
+create policy "Authenticated delete" on schedules
+  for delete using (auth.role() = 'authenticated');
+
+-- ══════════════════════════════════════════════════
+-- ADMIN SETUP
+-- ══════════════════════════════════════════════════
+-- After running this schema, create your admin user:
+--
+-- Option A: Supabase Dashboard
+--   1. Go to Authentication > Users
+--   2. Click "Add User"
+--   3. Enter the admin's email and password
+--
+-- Option B: Use the Supabase client in your browser console:
+--   const { data, error } = await supabase.auth.signUp({
+--     email: 'admin@yourleague.com',
+--     password: 'your-secure-password'
+--   });
+-- ══════════════════════════════════════════════════
