@@ -182,8 +182,6 @@ function FoursomeMatrix({
   players: string[];
   pairCount: Record<string, number>;
 }) {
-  const n = players.length;
-
   const shortName = (name: string) =>
     name.length <= 6 ? name : name.slice(0, 5) + '.';
 
