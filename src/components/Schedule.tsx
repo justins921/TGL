@@ -29,6 +29,8 @@ export default function Schedule({
   const [numWeeks, setNumWeeks] = useState('17');
   const [playerNames, setPlayerNames] = useState<string[]>([...DEFAULT_PLAYERS]);
   const [byeAssignments, setByeAssignments] = useState<Record<number, string>>({});
+  const [subNames, setSubNames] = useState<string[]>([]);
+  const [newSubName, setNewSubName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSetup, setShowSetup] = useState(true);
   const [swapSource, setSwapSource] = useState<number | null>(null);
@@ -65,6 +67,17 @@ export default function Schedule({
     });
   }, []);
 
+  const handleAddSub = useCallback(() => {
+    const name = newSubName.trim();
+    if (!name) return;
+    setSubNames((prev) => [...prev, name]);
+    setNewSubName('');
+  }, [newSubName]);
+
+  const handleRemoveSub = useCallback((index: number) => {
+    setSubNames((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   const getDisplayName = (index: number) =>
     playerNames[index]?.trim() || `Player ${index + 1}`;
 
@@ -88,7 +101,7 @@ export default function Schedule({
           }
         });
 
-        const data = generateSchedule(players, weekCount, assignedByes);
+        const data = generateSchedule(players, weekCount, assignedByes, subNames);
         setScheduleData(data);
         setShowSetup(false);
         onNewSchedule();
@@ -206,6 +219,41 @@ export default function Schedule({
               </div>
             )}
 
+            {/* Substitute Players */}
+            <div className="card">
+              <div className="card-title">Substitute Players</div>
+              <div className="card-subtitle">
+                Subs are not part of the schedule but are available to fill in for absent players
+              </div>
+              {subNames.map((name, i) => (
+                <div key={i} className="sub-row">
+                  <span className="sub-name">{name}</span>
+                  <button
+                    className="sub-remove-btn"
+                    onClick={() => handleRemoveSub(i)}
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+              <div className="sub-add-row">
+                <input
+                  className="name-input"
+                  placeholder="Sub name"
+                  value={newSubName}
+                  onChange={(e) => setNewSubName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddSub()}
+                />
+                <button
+                  className="sub-add-btn"
+                  onClick={handleAddSub}
+                  disabled={!newSubName.trim()}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
             {/* Generate Button */}
             <button
               className="generate-btn"
@@ -265,6 +313,18 @@ export default function Schedule({
                     </div>
                     <div className="stat-label">Byes/Player</div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Subs */}
+            {scheduleData && scheduleData.subs.length > 0 && (
+              <div className="card">
+                <div className="card-title">Substitute Players</div>
+                <div className="subs-list">
+                  {scheduleData.subs.map((name, i) => (
+                    <span key={i} className="sub-chip">{name}</span>
+                  ))}
                 </div>
               </div>
             )}

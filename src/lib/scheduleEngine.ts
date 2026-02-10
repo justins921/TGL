@@ -489,7 +489,8 @@ function generateOneSchedule(
 export function generateSchedule(
   players: string[],
   numWeeks: number,
-  assignedByes: Record<number, number[]>
+  assignedByes: Record<number, number[]>,
+  subs: string[] = []
 ): ScheduleData {
   const numPlayers = players.length;
 
@@ -530,6 +531,7 @@ export function generateSchedule(
   return {
     weeks: bestResult!.weeks,
     players,
+    subs,
     foursomeCount: bestResult!.foursomeCount,
     matchupCount: bestResult!.matchupCount,
     byeCount: bestResult!.byeCount,

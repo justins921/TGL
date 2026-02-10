@@ -18,6 +18,7 @@ export interface ScheduleResult {
 export interface ScheduleData {
   weeks: WeekData[];
   players: string[];
+  subs: string[];
   foursomeCount: Record<string, number>;
   matchupCount: Record<string, number>;
   byeCount: number[];
