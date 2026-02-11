@@ -1,8 +1,9 @@
 import { supabase } from './supabase';
 import { computeStats } from './scheduleEngine';
-import type { SavedSchedule, ScheduleData, ScheduleStats } from './types';
+import type { SavedSchedule, ScheduleData, ScheduleStats, PlayerProfile } from './types';
 
 const STORAGE_KEY = 'tgl-saved-schedules';
+const PLAYERS_KEY = 'tgl-players';
 
 // ── Database row shape ──
 
@@ -113,5 +114,122 @@ function rowToSaved(row: ScheduleRow): SavedSchedule {
     savedAt: new Date(row.saved_at).toLocaleString(),
     data: row.data,
     stats: row.stats,
+  };
+}
+
+// ══════════════════════════════════════
+// ── Players ──
+// ══════════════════════════════════════
+
+interface PlayerRow {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  photo_url: string;
+  handicap: number;
+  previous_season_avg: number | null;
+  is_sub: boolean;
+  weekly_results: { week: number; score: number }[];
+}
+
+function localLoadPlayers(): PlayerProfile[] {
+  try {
+    const raw = localStorage.getItem(PLAYERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function localSavePlayers(players: PlayerProfile[]): void {
+  localStorage.setItem(PLAYERS_KEY, JSON.stringify(players));
+}
+
+export async function loadPlayers(): Promise<PlayerProfile[]> {
+  if (!supabase) return localLoadPlayers();
+
+  const { data, error } = await supabase
+    .from('players')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.warn('Supabase players load failed, falling back to localStorage:', error.message);
+    return localLoadPlayers();
+  }
+
+  return (data as PlayerRow[]).map(rowToPlayer);
+}
+
+export async function savePlayer(player: PlayerProfile): Promise<void> {
+  if (!supabase) {
+    const current = localLoadPlayers();
+    const idx = current.findIndex((p) => p.id === player.id);
+    if (idx >= 0) {
+      current[idx] = player;
+    } else {
+      current.push(player);
+    }
+    localSavePlayers(current);
+    return;
+  }
+
+  const { error } = await supabase.from('players').upsert(playerToRow(player));
+
+  if (error) {
+    console.warn('Supabase player save failed, falling back to localStorage:', error.message);
+    const current = localLoadPlayers();
+    const idx = current.findIndex((p) => p.id === player.id);
+    if (idx >= 0) {
+      current[idx] = player;
+    } else {
+      current.push(player);
+    }
+    localSavePlayers(current);
+  }
+}
+
+export async function deletePlayer(id: string): Promise<void> {
+  if (!supabase) {
+    const current = localLoadPlayers();
+    localSavePlayers(current.filter((p) => p.id !== id));
+    return;
+  }
+
+  const { error } = await supabase.from('players').delete().eq('id', id);
+
+  if (error) {
+    console.warn('Supabase player delete failed, falling back to localStorage:', error.message);
+    const current = localLoadPlayers();
+    localSavePlayers(current.filter((p) => p.id !== id));
+  }
+}
+
+function rowToPlayer(row: PlayerRow): PlayerProfile {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    photoUrl: row.photo_url,
+    handicap: row.handicap,
+    previousSeasonAvg: row.previous_season_avg,
+    isSub: row.is_sub,
+    weeklyResults: row.weekly_results || [],
+  };
+}
+
+function playerToRow(p: PlayerProfile): PlayerRow {
+  return {
+    id: p.id,
+    name: p.name,
+    email: p.email,
+    phone: p.phone,
+    photo_url: p.photoUrl,
+    handicap: p.handicap,
+    previous_season_avg: p.previousSeasonAvg,
+    is_sub: p.isSub,
+    weekly_results: p.weeklyResults,
   };
 }

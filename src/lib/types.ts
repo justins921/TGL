@@ -55,3 +55,20 @@ export interface SavedSchedule {
   data: ScheduleData;
   stats: ScheduleStats;
 }
+
+export interface WeeklyResult {
+  week: number;
+  score: number;
+}
+
+export interface PlayerProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  photoUrl: string;
+  handicap: number;           // 0-10 max
+  previousSeasonAvg: number | null;
+  isSub: boolean;
+  weeklyResults: WeeklyResult[];
+}

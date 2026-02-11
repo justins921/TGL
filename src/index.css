@@ -1328,6 +1328,411 @@ input, select {
   transform: translateY(-1px);
 }
 
+/* ── Player Directory ── */
+.pd-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pd-filter-chip {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.pd-filter-chip.active {
+  background: var(--green-800);
+  border-color: var(--green-800);
+  color: #fff;
+}
+
+.pd-filter-chip:hover:not(.active) {
+  border-color: var(--green-700);
+  color: var(--green-800);
+}
+
+.pd-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.pd-add-btn {
+  flex: 1;
+  background: linear-gradient(135deg, var(--green-800), var(--green-700));
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.pd-add-btn:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.pd-add-btn.outline {
+  background: var(--card);
+  border: 1.5px solid var(--green-700);
+  color: var(--green-800);
+  box-shadow: none;
+}
+
+.pd-add-btn.outline:hover {
+  background: var(--green-50);
+}
+
+/* Player Card */
+.pd-player-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.pd-player-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pd-player-header:hover {
+  background: var(--green-50);
+}
+
+.pd-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-800), var(--green-600));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.pd-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-avatar-initial {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.pd-player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pd-player-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pd-sub-badge {
+  background: var(--orange-bg);
+  color: var(--orange-text);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.pd-player-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.pd-chevron {
+  font-size: 10px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* Player Details (expanded) */
+.pd-player-details {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.pd-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.pd-detail-row:last-of-type {
+  border-bottom: none;
+}
+
+.pd-detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pd-detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pd-scores-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pd-score-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  min-width: 52px;
+}
+
+.pd-score-week {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pd-score-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--green-800);
+}
+
+.pd-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.pd-edit-btn {
+  flex: 1;
+  background: linear-gradient(135deg, var(--green-800), var(--green-700));
+  color: #fff;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.pd-edit-btn:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.pd-delete-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.pd-delete-btn:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-light);
+}
+
+/* Edit Form */
+.pd-edit-card {
+  border-color: var(--green-700);
+  box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.1);
+}
+
+.pd-form-field {
+  margin-bottom: 12px;
+}
+
+.pd-form-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.pd-form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.pd-form-row .pd-form-field {
+  flex: 1;
+}
+
+.pd-checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  text-transform: none !important;
+  font-size: 14px !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer;
+}
+
+.pd-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green-700);
+}
+
+.pd-results-section {
+  margin-bottom: 12px;
+}
+
+.pd-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.pd-results-header label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pd-result-add-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--green-800);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.pd-result-add-btn:hover {
+  border-color: var(--green-700);
+  background: var(--green-50);
+}
+
+.pd-result-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.pd-result-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.pd-result-input {
+  flex: 1;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pd-result-input:focus {
+  outline: none;
+  border-color: var(--green-700);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+}
+
+.pd-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pd-save-btn {
+  flex: 1;
+  background: linear-gradient(135deg, var(--green-800), var(--green-700));
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.pd-save-btn:hover:not(:disabled) {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.pd-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pd-cancel-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.pd-cancel-btn:hover {
+  border-color: var(--muted);
+  background: var(--bg);
+}
+
+.pd-results-table {
+  padding: 8px 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 480px) {
   .banner h1 {

@@ -33,6 +33,37 @@ create policy "Authenticated update" on schedules
 create policy "Authenticated delete" on schedules
   for delete using (auth.role() = 'authenticated');
 
+-- ── Players table ──
+create table if not exists players (
+  id text primary key,
+  name text not null,
+  email text not null default '',
+  phone text not null default '',
+  photo_url text not null default '',
+  handicap numeric not null default 0 check (handicap >= 0 and handicap <= 10),
+  previous_season_avg numeric,
+  is_sub boolean not null default false,
+  weekly_results jsonb not null default '[]'::jsonb
+);
+
+create index if not exists players_name_idx on players (name);
+
+alter table players enable row level security;
+
+-- Anyone can read players
+create policy "Public read players" on players
+  for select using (true);
+
+-- Only authenticated users can manage players
+create policy "Authenticated insert players" on players
+  for insert with check (auth.role() = 'authenticated');
+
+create policy "Authenticated update players" on players
+  for update using (auth.role() = 'authenticated');
+
+create policy "Authenticated delete players" on players
+  for delete using (auth.role() = 'authenticated');
+
 -- ══════════════════════════════════════════════════
 -- ADMIN SETUP
 -- ══════════════════════════════════════════════════
