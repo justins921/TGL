@@ -74,39 +74,6 @@ function AppContent() {
 
   return (
     <div>
-      <nav className="tab-bar">
-        <button
-          className={`tab-btn ${activeTab === 'schedule' ? 'active' : ''}`}
-          onClick={() => setActiveTab('schedule')}
-        >
-          &#128197; Schedule
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'players' ? 'active' : ''}`}
-          onClick={() => setActiveTab('players')}
-        >
-          &#128100; Players
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
-        >
-          &#128202; Analytics
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'compare' ? 'active' : ''}`}
-          onClick={() => setActiveTab('compare')}
-        >
-          &#9878; Compare
-        </button>
-        <button
-          className="tab-btn admin-btn"
-          onClick={() => (user ? signOut() : setShowLogin(true))}
-        >
-          {user ? <>&#128275; Logout</> : <>&#128274; Admin</>}
-        </button>
-      </nav>
-
       {/* Persistent save bar - admin only */}
       {isAdmin && scheduleData && activeTab !== 'players' && (
         <div className={`save-strip ${justSaved ? 'saved' : ''}`}>
@@ -165,6 +132,45 @@ function AppContent() {
           isAdmin={isAdmin}
         />
       )}
+
+      {/* Bottom Tab Navigation */}
+      <nav className="tab-bar">
+        <button
+          className={`tab-btn ${activeTab === 'schedule' ? 'active' : ''}`}
+          onClick={() => setActiveTab('schedule')}
+        >
+          <span className="tab-icon">&#128197;</span>
+          <span className="tab-label">Schedule</span>
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'players' ? 'active' : ''}`}
+          onClick={() => setActiveTab('players')}
+        >
+          <span className="tab-icon">&#128100;</span>
+          <span className="tab-label">Players</span>
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          <span className="tab-icon">&#128202;</span>
+          <span className="tab-label">Analytics</span>
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'compare' ? 'active' : ''}`}
+          onClick={() => setActiveTab('compare')}
+        >
+          <span className="tab-icon">&#9878;</span>
+          <span className="tab-label">Compare</span>
+        </button>
+        <button
+          className="tab-btn admin-btn"
+          onClick={() => (user ? signOut() : setShowLogin(true))}
+        >
+          <span className="tab-icon">{user ? '\u{1F513}' : '\u{1F512}'}</span>
+          <span className="tab-label">{user ? 'Logout' : 'Admin'}</span>
+        </button>
+      </nav>
 
       {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
     </div>
