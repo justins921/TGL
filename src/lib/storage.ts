@@ -121,6 +121,45 @@ function rowToSaved(row: ScheduleRow): SavedSchedule {
 // ── Players ──
 // ══════════════════════════════════════
 
+function genSeedId(i: number): string {
+  return `seed-${i.toString(36)}`;
+}
+
+const DEFAULT_ROSTER: { name: string; isSub: boolean }[] = [
+  { name: 'Bryon A', isSub: false },
+  { name: 'Buddha', isSub: false },
+  { name: 'David L', isSub: false },
+  { name: 'Jeff B', isSub: false },
+  { name: 'John M', isSub: false },
+  { name: 'Justin S', isSub: false },
+  { name: 'Mark L', isSub: false },
+  { name: 'Mike S', isSub: false },
+  { name: 'Rudy', isSub: false },
+  { name: 'Terry S', isSub: false },
+  { name: 'Tim B', isSub: false },
+  { name: 'Tim M', isSub: false },
+  { name: 'Tom K', isSub: false },
+  { name: 'Lee N', isSub: false },
+  { name: 'Kevin F', isSub: false },
+  { name: 'Joe D', isSub: false },
+  { name: 'Phil P', isSub: false },
+  { name: 'Dan L', isSub: true },
+];
+
+function buildSeedPlayers(): PlayerProfile[] {
+  return DEFAULT_ROSTER.map((entry, i) => ({
+    id: genSeedId(i),
+    name: entry.name,
+    email: '',
+    phone: '',
+    photoUrl: '',
+    handicap: 0,
+    previousSeasonAvg: null,
+    isSub: entry.isSub,
+    weeklyResults: [],
+  }));
+}
+
 interface PlayerRow {
   id: string;
   name: string;
@@ -147,7 +186,14 @@ function localSavePlayers(players: PlayerProfile[]): void {
 }
 
 export async function loadPlayers(): Promise<PlayerProfile[]> {
-  if (!supabase) return localLoadPlayers();
+  if (!supabase) {
+    const local = localLoadPlayers();
+    if (local.length > 0) return local;
+    // Seed with default roster
+    const seed = buildSeedPlayers();
+    localSavePlayers(seed);
+    return seed;
+  }
 
   const { data, error } = await supabase
     .from('players')
@@ -156,10 +202,21 @@ export async function loadPlayers(): Promise<PlayerProfile[]> {
 
   if (error) {
     console.warn('Supabase players load failed, falling back to localStorage:', error.message);
-    return localLoadPlayers();
+    const local = localLoadPlayers();
+    return local.length > 0 ? local : buildSeedPlayers();
   }
 
-  return (data as PlayerRow[]).map(rowToPlayer);
+  const players = (data as PlayerRow[]).map(rowToPlayer);
+
+  // Seed Supabase if empty
+  if (players.length === 0) {
+    const seed = buildSeedPlayers();
+    const rows = seed.map(playerToRow);
+    await supabase.from('players').insert(rows);
+    return seed;
+  }
+
+  return players;
 }
 
 export async function savePlayer(player: PlayerProfile): Promise<void> {
