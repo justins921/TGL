@@ -79,7 +79,7 @@ input, select {
   display: flex;
   align-items: center;
   height: var(--nav-height);
-  padding: 0 12px;
+  padding: 0 16px;
   padding-top: var(--safe-top);
   background: rgba(249, 249, 249, 0.94);
   backdrop-filter: saturate(180%) blur(20px);
@@ -88,39 +88,25 @@ input, select {
   position: sticky;
   top: 0;
   z-index: 100;
+  max-width: 100%;
 }
 
 .top-bar-title {
   flex: 1;
-  text-align: center;
   font-size: 17px;
   font-weight: 600;
   color: var(--label);
   letter-spacing: -0.02em;
 }
 
-.top-bar-action {
-  background: none;
-  color: var(--tint);
-  font-size: 15px;
-  font-weight: 400;
-  padding: 8px 4px;
-  min-width: 60px;
-  text-align: right;
-  transition: opacity 0.15s;
-}
-
-.top-bar-action:active {
-  opacity: 0.5;
-}
-
 /* Hamburger Button */
 .hamburger-btn {
   background: none;
-  padding: 8px 4px;
-  min-width: 60px;
+  padding: 8px 0 8px 12px;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .hamburger-btn:active {
@@ -162,9 +148,10 @@ input, select {
 /* Dropdown Menu */
 .menu-dropdown {
   position: absolute;
-  top: calc(var(--nav-height) + var(--safe-top));
-  left: 8px;
-  right: 8px;
+  top: calc(var(--nav-height) + var(--safe-top) - 4px);
+  right: 12px;
+  left: auto;
+  min-width: 220px;
   background: var(--bg-grouped);
   border-radius: var(--radius);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12),
@@ -172,6 +159,13 @@ input, select {
   overflow: hidden;
   z-index: 101;
   animation: menuSlide 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+  transform-origin: top right;
+}
+
+.menu-divider {
+  height: 0.5px;
+  background: var(--separator-opaque);
+  margin: 4px 0;
 }
 
 @keyframes menuSlide {
@@ -1868,9 +1862,7 @@ input, select {
   }
 
   .menu-dropdown {
-    left: 8px;
-    right: auto;
-    width: 260px;
+    min-width: 260px;
   }
 
   .modal-overlay {

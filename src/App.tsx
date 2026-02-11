@@ -102,6 +102,7 @@ function AppContent() {
     <div>
       {/* iOS-style top navigation bar */}
       <header className="top-bar" ref={menuRef}>
+        <span className="top-bar-title">{tabLabels[activeTab]}</span>
         <button
           className="hamburger-btn"
           onClick={() => setMenuOpen((v) => !v)}
@@ -110,13 +111,6 @@ function AppContent() {
           <span className={`hamburger-icon ${menuOpen ? 'open' : ''}`}>
             <span /><span /><span />
           </span>
-        </button>
-        <span className="top-bar-title">{tabLabels[activeTab]}</span>
-        <button
-          className="top-bar-action"
-          onClick={() => (user ? signOut() : setShowLogin(true))}
-        >
-          {user ? 'Logout' : 'Admin'}
         </button>
 
         {menuOpen && (
@@ -137,6 +131,19 @@ function AppContent() {
                 {activeTab === tab && <span className="menu-check">{'\u{2713}'}</span>}
               </button>
             ))}
+            <div className="menu-divider" />
+            <button
+              className="menu-item"
+              onClick={() => {
+                if (user) { signOut(); } else { setShowLogin(true); }
+                setMenuOpen(false);
+              }}
+            >
+              <span className="menu-item-icon">
+                {user ? '\u{1F513}' : '\u{1F512}'}
+              </span>
+              {user ? 'Log Out' : 'Admin Login'}
+            </button>
           </div>
         )}
       </header>
