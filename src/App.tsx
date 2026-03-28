@@ -147,6 +147,7 @@ function AppContent() {
           onLoad={handleLoad}
           onNewSchedule={handleNewSchedule}
           isAdmin={isAdmin}
+          playerProfiles={players}
         />
       ) : activeTab === 'players' ? (
         <Players

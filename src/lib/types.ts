@@ -22,6 +22,7 @@ export interface ScheduleData {
   foursomeCount: Record<string, number>;
   matchupCount: Record<string, number>;
   byeCount: number[];
+  scores?: Record<string, number>; // "weekIndex-playerIndex" -> gross score
 }
 
 export interface PlayerWeekEntry {

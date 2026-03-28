@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { generateSchedule, computeStats } from '../lib/scheduleEngine';
-import type { ScheduleData, SavedSchedule } from '../lib/types';
+import type { ScheduleData, SavedSchedule, PlayerProfile } from '../lib/types';
 
 const DEFAULT_PLAYERS = [
   'Bryon A', 'Buddha', 'David L', 'Jeff B', 'John M', 'Justin S',
@@ -16,6 +16,7 @@ interface Props {
   onLoad: (saved: SavedSchedule) => void;
   onNewSchedule: () => void;
   isAdmin: boolean;
+  playerProfiles: PlayerProfile[];
 }
 
 export default function Schedule({
@@ -26,6 +27,7 @@ export default function Schedule({
   onLoad,
   onNewSchedule,
   isAdmin,
+  playerProfiles,
 }: Props) {
   const [numPlayers, setNumPlayers] = useState('17');
   const [numWeeks, setNumWeeks] = useState('17');
@@ -134,6 +136,29 @@ export default function Schedule({
       setSwapSource(null);
     },
     [swapSource, scheduleData, setScheduleData]
+  );
+
+  const handleScoreChange = useCallback(
+    (weekIndex: number, playerIndex: number, value: string) => {
+      if (!scheduleData) return;
+      const scores = { ...(scheduleData.scores || {}) };
+      const key = `${weekIndex}-${playerIndex}`;
+      if (value === '') {
+        delete scores[key];
+      } else {
+        scores[key] = parseInt(value) || 0;
+      }
+      setScheduleData({ ...scheduleData, scores });
+    },
+    [scheduleData, setScheduleData]
+  );
+
+  const getHandicap = useCallback(
+    (playerName: string): number => {
+      const profile = playerProfiles.find((p) => p.name === playerName);
+      return profile ? profile.handicap : 0;
+    },
+    [playerProfiles]
   );
 
   const stats = scheduleData ? computeStats(scheduleData) : null;
@@ -432,16 +457,83 @@ export default function Schedule({
                 {week.foursomes.map((foursome, fIdx) => (
                   <div key={fIdx} className="foursome-card">
                     <div className="foursome-title">Foursome {fIdx + 1}</div>
-                    {foursome.matchups.map(([a, b], mIdx) => (
-                      <div key={mIdx} className="matchup-row">
-                        <div className="match-label">Match {mIdx + 1}</div>
-                        <div className="match-players">
-                          <span className="player-name">{scheduleData.players[a]}</span>
-                          <span className="vs-badge">VS</span>
-                          <span className="player-name">{scheduleData.players[b]}</span>
+                    {foursome.matchups.map(([a, b], mIdx) => {
+                      const scores = scheduleData.scores || {};
+                      const scoreA = scores[`${weekIndex}-${a}`];
+                      const scoreB = scores[`${weekIndex}-${b}`];
+                      const hcpA = getHandicap(scheduleData.players[a]);
+                      const hcpB = getHandicap(scheduleData.players[b]);
+                      const hasScores = scoreA !== undefined && scoreB !== undefined;
+                      const netA = hasScores ? scoreA - hcpA : null;
+                      const netB = hasScores ? scoreB - hcpB : null;
+                      const winnerA = netA !== null && netB !== null && netA < netB;
+                      const winnerB = netA !== null && netB !== null && netB < netA;
+                      const tie = netA !== null && netB !== null && netA === netB;
+
+                      return (
+                        <div key={mIdx} className="matchup-row">
+                          <div className="match-label">Match {mIdx + 1}</div>
+                          <div className="match-players">
+                            <span className={`player-name${winnerA ? ' match-winner' : ''}`}>
+                              {scheduleData.players[a]}
+                            </span>
+                            <span className="vs-badge">VS</span>
+                            <span className={`player-name${winnerB ? ' match-winner' : ''}`}>
+                              {scheduleData.players[b]}
+                            </span>
+                          </div>
+                          <div className="match-scores">
+                            <div className="score-entry">
+                              {isAdmin ? (
+                                <input
+                                  className="score-input"
+                                  type="number"
+                                  placeholder="Score"
+                                  value={scoreA ?? ''}
+                                  onChange={(e) => handleScoreChange(weekIndex, a, e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                scoreA !== undefined && (
+                                  <span className="score-display">{scoreA}</span>
+                                )
+                              )}
+                              {hasScores && (
+                                <span className={`net-score${winnerA ? ' net-winner' : ''}`}>
+                                  Net {netA!.toFixed(1)}
+                                </span>
+                              )}
+                              {hasScores && winnerA && <span className="match-win-badge">W</span>}
+                            </div>
+                            <div className="score-result">
+                              {hasScores && tie && <span className="match-tie">TIE</span>}
+                            </div>
+                            <div className="score-entry">
+                              {isAdmin ? (
+                                <input
+                                  className="score-input"
+                                  type="number"
+                                  placeholder="Score"
+                                  value={scoreB ?? ''}
+                                  onChange={(e) => handleScoreChange(weekIndex, b, e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                scoreB !== undefined && (
+                                  <span className="score-display">{scoreB}</span>
+                                )
+                              )}
+                              {hasScores && (
+                                <span className={`net-score${winnerB ? ' net-winner' : ''}`}>
+                                  Net {netB!.toFixed(1)}
+                                </span>
+                              )}
+                              {hasScores && winnerB && <span className="match-win-badge">W</span>}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ))}
               </div>
