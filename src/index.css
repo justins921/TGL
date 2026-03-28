@@ -2155,3 +2155,171 @@ input, select {
     width: 100%;
   }
 }
+
+/* ══════════════════════════════════════ */
+/* ── Print Styles ── */
+/* ══════════════════════════════════════ */
+@media print {
+  /* Hide non-essential UI */
+  .tab-bar,
+  .save-strip,
+  .no-print,
+  .swap-btn,
+  .swap-hint,
+  .admin-btn,
+  .saved-row,
+  .sub-selector-dropdown,
+  .match-sub-selectors,
+  .sc-score-input,
+  .sc-empty-hint {
+    display: none !important;
+  }
+
+  /* Reset backgrounds for print */
+  body {
+    background: #fff;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page-content {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .banner {
+    background: none !important;
+    color: #000 !important;
+    padding: 10px 0;
+    text-align: center;
+  }
+
+  .banner h1 {
+    color: #000;
+    font-size: 20px;
+  }
+
+  .banner p {
+    color: #333;
+    font-size: 12px;
+  }
+
+  .banner-icon {
+    font-size: 24px;
+  }
+
+  /* Cards */
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    break-inside: avoid;
+    margin-bottom: 8px;
+    padding: 8px 10px;
+  }
+
+  .card-title {
+    font-size: 13px;
+  }
+
+  /* Week cards */
+  .week-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    break-inside: avoid;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  .week-title {
+    font-size: 14px;
+  }
+
+  .week-date-input {
+    display: none;
+  }
+
+  .week-date {
+    font-size: 11px;
+  }
+
+  /* Foursome cards */
+  .foursome-card {
+    break-inside: avoid;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+  }
+
+  .foursome-title {
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+
+  /* Match players (unplayed) */
+  .match-players {
+    gap: 6px;
+  }
+
+  .player-name {
+    font-size: 12px;
+  }
+
+  .vs-badge {
+    font-size: 8px;
+    padding: 1px 6px;
+  }
+
+  /* Scorecard */
+  .scorecard-scroll {
+    overflow: visible;
+  }
+
+  .scorecard-table {
+    font-size: 10px;
+    min-width: 0;
+  }
+
+  .scorecard-table th,
+  .scorecard-table td {
+    padding: 2px 1px;
+  }
+
+  .sc-score-val {
+    font-size: 11px;
+  }
+
+  .sc-player-name {
+    font-size: 10px;
+  }
+
+  .sc-hcp {
+    font-size: 8px;
+  }
+
+  .sc-sub-badge {
+    font-size: 8px;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    gap: 6px;
+  }
+
+  .stat-chip {
+    padding: 4px 8px;
+  }
+
+  .stat-value {
+    font-size: 14px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+  }
+
+  /* Bye tag */
+  .bye-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+}

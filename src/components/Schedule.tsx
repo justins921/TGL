@@ -433,9 +433,17 @@ export default function Schedule({
               </div>
             )}
 
-            {/* Action Buttons - Admin only */}
+            {/* Print + Action Buttons */}
+            <div className="action-row no-print">
+              <button
+                className="action-btn secondary"
+                onClick={() => window.print()}
+              >
+                &#128424; Print Schedule
+              </button>
+            </div>
             {isAdmin && (
-              <div className="action-row">
+              <div className="action-row no-print">
                 <button
                   className="action-btn primary"
                   onClick={handleGenerate}
