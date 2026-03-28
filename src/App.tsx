@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { buildDefaultProfiles } from './lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from './lib/types';
 import { loadSchedules, saveSchedule, deleteSchedule, loadPlayers, savePlayer, deletePlayer } from './lib/storage';
@@ -10,9 +10,21 @@ import Players from './components/Players';
 import Leaderboard from './components/Leaderboard';
 import AdminLogin from './components/AdminLogin';
 
+type Tab = 'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players';
+
+const ALL_TABS: { id: Tab; label: string; icon: string; adminOnly: boolean }[] = [
+  { id: 'schedule', label: 'Schedule', icon: '\u{1F4C5}', adminOnly: false },
+  { id: 'leaderboard', label: 'Standings', icon: '\u{1F3C6}', adminOnly: false },
+  { id: 'players', label: 'Players', icon: '\u{1F464}', adminOnly: false },
+  { id: 'analytics', label: 'Analytics', icon: '\u{1F4CA}', adminOnly: false },
+  { id: 'compare', label: 'Compare', icon: '\u2696', adminOnly: true },
+];
+
 function AppContent() {
   const { isAdmin, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players'>('schedule');
+  const [activeTab, setActiveTab] = useState<Tab>('schedule');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>([]);
   const [players, setPlayers] = useState<PlayerProfile[]>([]);
@@ -80,49 +92,80 @@ function AppContent() {
     setPlayers((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
+  const handleTabSelect = useCallback((tab: Tab) => {
+    setActiveTab(tab);
+    setMenuOpen(false);
+  }, []);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [menuOpen]);
+
+  const visibleTabs = ALL_TABS.filter((t) => !t.adminOnly || isAdmin);
+  const activeLabel = visibleTabs.find((t) => t.id === activeTab);
+
   return (
     <div>
-      <nav className="tab-bar">
-        <button
-          className={`tab-btn ${activeTab === 'schedule' ? 'active' : ''}`}
-          onClick={() => setActiveTab('schedule')}
-        >
-          &#128197; Schedule
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'leaderboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('leaderboard')}
-        >
-          &#127942; Standings
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'players' ? 'active' : ''}`}
-          onClick={() => setActiveTab('players')}
-        >
-          &#128100; Players
-        </button>
-        {isAdmin && (
-          <>
+      <nav className="nav-bar" ref={menuRef}>
+        <div className="nav-brand">
+          <span className="nav-brand-icon">&#9971;</span>
+          <span className="nav-brand-text">TGL</span>
+        </div>
+
+        <div className="nav-active-label">{activeLabel?.icon} {activeLabel?.label}</div>
+
+        <div className="nav-right">
+          <button
+            className="nav-admin-btn"
+            onClick={() => (isAdmin ? signOut() : setShowLogin(true))}
+          >
+            {isAdmin ? '\u{1F513} Logout' : '\u{1F512} Admin'}
+          </button>
+          <button
+            className="nav-hamburger"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Menu"
+          >
+            <span className={`hamburger-icon${menuOpen ? ' open' : ''}`}>
+              <span /><span /><span />
+            </span>
+          </button>
+        </div>
+
+        {menuOpen && (
+          <div className="nav-menu">
+            {visibleTabs.map((tab) => (
+              <button
+                key={tab.id}
+                className={`nav-menu-item${activeTab === tab.id ? ' active' : ''}`}
+                onClick={() => handleTabSelect(tab.id)}
+              >
+                <span className="nav-menu-icon">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+            <div className="nav-menu-divider" />
             <button
-              className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-              onClick={() => setActiveTab('analytics')}
+              className="nav-menu-item nav-menu-admin"
+              onClick={() => {
+                setMenuOpen(false);
+                if (isAdmin) signOut();
+                else setShowLogin(true);
+              }}
             >
-              &#128202; Analytics
+              <span className="nav-menu-icon">{isAdmin ? '\u{1F513}' : '\u{1F512}'}</span>
+              {isAdmin ? 'Logout' : 'Admin Login'}
             </button>
-            <button
-              className={`tab-btn ${activeTab === 'compare' ? 'active' : ''}`}
-              onClick={() => setActiveTab('compare')}
-            >
-              &#9878; Compare
-            </button>
-          </>
+          </div>
         )}
-        <button
-          className="tab-btn admin-btn"
-          onClick={() => (isAdmin ? signOut() : setShowLogin(true))}
-        >
-          {isAdmin ? <>&#128275; Logout</> : <>&#128274; Admin</>}
-        </button>
       </nav>
 
       {/* Persistent save bar - admin only */}

@@ -51,40 +51,156 @@ input, select {
 }
 
 /* ── Tabs ── */
-.tab-bar {
+/* ── Navigation Bar ── */
+.nav-bar {
   display: flex;
+  align-items: center;
   background: var(--green-900);
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: var(--shadow-md);
+  padding: 0 12px;
+  height: 52px;
 }
 
-.tab-btn {
-  flex: 1;
-  padding: 16px;
-  background: none;
-  color: rgba(255,255,255,0.6);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+.nav-brand {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-  border-bottom: 3px solid transparent;
-}
-
-.tab-btn:hover {
-  color: rgba(255,255,255,0.85);
-  background: rgba(255,255,255,0.06);
-}
-
-.tab-btn.active {
+  gap: 6px;
   color: #fff;
-  border-bottom-color: var(--gold);
+  font-weight: 800;
+  font-size: 16px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.nav-brand-icon {
+  font-size: 20px;
+}
+
+.nav-active-label {
+  flex: 1;
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nav-admin-btn {
+  background: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.nav-admin-btn:hover {
+  color: rgba(255,255,255,0.8);
   background: rgba(255,255,255,0.08);
+}
+
+/* Hamburger button */
+.nav-hamburger {
+  background: none;
+  padding: 8px 4px;
+  display: flex;
+  align-items: center;
+}
+
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 22px;
+}
+
+.hamburger-icon span {
+  display: block;
+  height: 2px;
+  background: #fff;
+  border-radius: 1px;
+  transition: all 0.2s ease;
+}
+
+.hamburger-icon.open span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.hamburger-icon.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-icon.open span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Dropdown menu */
+.nav-menu {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  left: 0;
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+  border-bottom: 2px solid var(--green-700);
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+}
+
+.nav-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: none;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.nav-menu-item:hover {
+  background: var(--surface);
+}
+
+.nav-menu-item.active {
+  color: var(--green-700);
+  font-weight: 700;
+  background: var(--green-50);
+}
+
+.nav-menu-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.nav-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 16px;
+}
+
+.nav-menu-admin {
+  color: var(--muted);
+  font-size: 14px;
 }
 
 /* ── Banner ── */
@@ -1418,18 +1534,6 @@ input, select {
 }
 
 /* ── Admin Button in Tab Bar ── */
-.tab-btn.admin-btn {
-  flex: 0;
-  padding: 16px 14px;
-  font-size: 12px;
-  white-space: nowrap;
-  border-bottom-color: transparent !important;
-  color: rgba(255,255,255,0.4);
-}
-
-.tab-btn.admin-btn:hover {
-  color: rgba(255,255,255,0.7);
-}
 
 /* ── Login Modal ── */
 .modal-overlay {
@@ -2137,21 +2241,8 @@ input, select {
 
 /* Tablet and below */
 @media (max-width: 768px) {
-  /* Tab bar: horizontal scroll instead of squishing */
-  .tab-bar {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .tab-bar::-webkit-scrollbar {
-    display: none;
-  }
-  .tab-btn {
-    flex: 0 0 auto;
-    padding: 12px 14px;
-    font-size: 13px;
-    gap: 4px;
-    white-space: nowrap;
+  .nav-admin-btn {
+    display: none; /* show in menu instead */
   }
 }
 
@@ -2373,12 +2464,11 @@ input, select {
 /* ══════════════════════════════════════ */
 @media print {
   /* Hide non-essential UI */
-  .tab-bar,
+  .nav-bar,
   .save-strip,
   .no-print,
   .swap-btn,
   .swap-hint,
-  .admin-btn,
   .saved-row,
   .sub-selector-dropdown,
   .match-sub-selectors,
