@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { generateSchedule, computeStats } from '../lib/scheduleEngine';
+import { HOLE_COUNT } from '../lib/scoring';
 import { DEFAULT_ROSTER } from '../lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from '../lib/types';
 import MatchScorecard from './MatchScorecard';
@@ -534,6 +535,15 @@ export default function Schedule({
                       const subHandicapB = subB && subB !== 'Casper' ? getHandicap(subB) : undefined;
                       const availableSubs = scheduleData.subs || [];
 
+                      // Check if any scores exist for this match
+                      const matchScores = scheduleData.scores || {};
+                      const hasMatchScores =
+                        subA === 'Casper' || subB === 'Casper' ||
+                        Array.from({ length: HOLE_COUNT }, (_, h) =>
+                          matchScores[`${weekIndex}-${a}-${h}`] !== undefined ||
+                          matchScores[`${weekIndex}-${b}-${h}`] !== undefined
+                        ).some(Boolean);
+
                       return (
                         <div key={mIdx} className="matchup-row">
                           <div className="match-label">Match {mIdx + 1}</div>
@@ -554,22 +564,30 @@ export default function Schedule({
                               />
                             </div>
                           )}
-                          <MatchScorecard
-                            weekIndex={weekIndex}
-                            playerAIndex={a}
-                            playerBIndex={b}
-                            playerAName={scheduleData.players[a]}
-                            playerBName={scheduleData.players[b]}
-                            handicapA={getHandicap(scheduleData.players[a])}
-                            handicapB={getHandicap(scheduleData.players[b])}
-                            subA={subA}
-                            subB={subB}
-                            subHandicapA={subHandicapA}
-                            subHandicapB={subHandicapB}
-                            scores={scheduleData.scores || {}}
-                            onScoreChange={handleScoreChange}
-                            isAdmin={isAdmin}
-                          />
+                          {isAdmin || hasMatchScores ? (
+                            <MatchScorecard
+                              weekIndex={weekIndex}
+                              playerAIndex={a}
+                              playerBIndex={b}
+                              playerAName={scheduleData.players[a]}
+                              playerBName={scheduleData.players[b]}
+                              handicapA={getHandicap(scheduleData.players[a])}
+                              handicapB={getHandicap(scheduleData.players[b])}
+                              subA={subA}
+                              subB={subB}
+                              subHandicapA={subHandicapA}
+                              subHandicapB={subHandicapB}
+                              scores={scheduleData.scores || {}}
+                              onScoreChange={handleScoreChange}
+                              isAdmin={isAdmin}
+                            />
+                          ) : (
+                            <div className="match-players">
+                              <span className="player-name">{scheduleData.players[a]}</span>
+                              <span className="vs-badge">VS</span>
+                              <span className="player-name">{scheduleData.players[b]}</span>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

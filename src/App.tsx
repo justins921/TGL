@@ -7,11 +7,12 @@ import Schedule from './components/Schedule';
 import Analytics from './components/Analytics';
 import Compare from './components/Compare';
 import Players from './components/Players';
+import Leaderboard from './components/Leaderboard';
 import AdminLogin from './components/AdminLogin';
 
 function AppContent() {
   const { isAdmin, user, signOut, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'schedule' | 'analytics' | 'compare' | 'players'>('schedule');
+  const [activeTab, setActiveTab] = useState<'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players'>('schedule');
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>([]);
   const [players, setPlayers] = useState<PlayerProfile[]>([]);
@@ -91,23 +92,33 @@ function AppContent() {
           &#128197; Schedule
         </button>
         <button
+          className={`tab-btn ${activeTab === 'leaderboard' ? 'active' : ''}`}
+          onClick={() => setActiveTab('leaderboard')}
+        >
+          &#127942; Standings
+        </button>
+        <button
           className={`tab-btn ${activeTab === 'players' ? 'active' : ''}`}
           onClick={() => setActiveTab('players')}
         >
           &#128100; Players
         </button>
-        <button
-          className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
-        >
-          &#128202; Analytics
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'compare' ? 'active' : ''}`}
-          onClick={() => setActiveTab('compare')}
-        >
-          &#9878; Compare
-        </button>
+        {isAdmin && (
+          <>
+            <button
+              className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+              onClick={() => setActiveTab('analytics')}
+            >
+              &#128202; Analytics
+            </button>
+            <button
+              className={`tab-btn ${activeTab === 'compare' ? 'active' : ''}`}
+              onClick={() => setActiveTab('compare')}
+            >
+              &#9878; Compare
+            </button>
+          </>
+        )}
         <button
           className="tab-btn admin-btn"
           onClick={() => (user ? signOut() : setShowLogin(true))}
@@ -156,6 +167,11 @@ function AppContent() {
           onLoad={handleLoad}
           onNewSchedule={handleNewSchedule}
           isAdmin={isAdmin}
+          playerProfiles={players}
+        />
+      ) : activeTab === 'leaderboard' ? (
+        <Leaderboard
+          scheduleData={scheduleData}
           playerProfiles={players}
         />
       ) : activeTab === 'players' ? (
