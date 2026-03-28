@@ -60,11 +60,20 @@ export interface MatchResult {
 }
 
 /**
+ * Casper scoring: when a real player faces a no-show,
+ * they receive 6 + (40 + handicap - gross) * 0.5 total points.
+ */
+function casperPoints(handicap: number, totalGross: number): number {
+  return 6 + (40 + handicap - totalGross) * 0.5;
+}
+
+/**
  * Calculate full match result from hole-by-hole gross scores.
- * Returns null if either player has incomplete scores.
+ * Returns null if either player has incomplete scores (unless Casper).
  *
- * casperA/casperB: if true, that player is a "Casper" (no-show)
- * and all points go to 0 for both players.
+ * casperA/casperB: if true, that player is a "Casper" (no-show).
+ * - Both Casper → both get 0
+ * - One Casper → Casper gets 0, real player gets 6 + (40 + hcp - gross) * 0.5
  */
 export function calculateMatchResult(
   grossA: (number | undefined)[],
@@ -74,8 +83,10 @@ export function calculateMatchResult(
   casperA: boolean = false,
   casperB: boolean = false
 ): MatchResult | null {
-  // If either is a Casper, all points are 0
-  if (casperA || casperB) {
+  const emptyStrokes = new Array(HOLE_COUNT).fill(0);
+
+  // Both Casper → all zeros
+  if (casperA && casperB) {
     return {
       holePointsA: new Array(HOLE_COUNT).fill(0),
       holePointsB: new Array(HOLE_COUNT).fill(0),
@@ -85,12 +96,37 @@ export function calculateMatchResult(
       totalPointsB: 0,
       netScoresA: new Array(HOLE_COUNT).fill(0),
       netScoresB: new Array(HOLE_COUNT).fill(0),
-      strokesGivenA: getStrokesGiven(handicapA, handicapB),
-      strokesGivenB: getStrokesGiven(handicapB, handicapA),
+      strokesGivenA: emptyStrokes,
+      strokesGivenB: emptyStrokes,
     };
   }
 
-  // Check all scores are present
+  // One Casper → real player gets casper points, Casper gets 0
+  if (casperA || casperB) {
+    const realGross = casperA ? grossB : grossA;
+    const realHcp = casperA ? handicapB : handicapA;
+
+    // Need the real player's scores to calculate
+    const totalGross = realGross.reduce<number>((s, v) => s + (v ?? 0), 0);
+    const allFilled = realGross.every((v) => v !== undefined);
+    if (!allFilled) return null;
+
+    const realTotal = casperPoints(realHcp, totalGross);
+    return {
+      holePointsA: new Array(HOLE_COUNT).fill(0),
+      holePointsB: new Array(HOLE_COUNT).fill(0),
+      totalPointA: casperA ? 0 : realTotal,
+      totalPointB: casperB ? 0 : realTotal,
+      totalPointsA: casperA ? 0 : realTotal,
+      totalPointsB: casperB ? 0 : realTotal,
+      netScoresA: new Array(HOLE_COUNT).fill(0),
+      netScoresB: new Array(HOLE_COUNT).fill(0),
+      strokesGivenA: emptyStrokes,
+      strokesGivenB: emptyStrokes,
+    };
+  }
+
+  // Normal match — check all scores are present
   for (let h = 0; h < HOLE_COUNT; h++) {
     if (grossA[h] === undefined || grossB[h] === undefined) return null;
   }
@@ -121,16 +157,18 @@ export function calculateMatchResult(
     }
   }
 
-  // 10th point: total gross strokes comparison
+  // 10th point: total NET strokes comparison (gross - handicap)
   const totalGrossA: number = grossA.reduce<number>((s, v) => s + (v ?? 0), 0);
   const totalGrossB: number = grossB.reduce<number>((s, v) => s + (v ?? 0), 0);
+  const totalNetA = totalGrossA - handicapA;
+  const totalNetB = totalGrossB - handicapB;
   let totalPointA: number;
   let totalPointB: number;
 
-  if (totalGrossA < totalGrossB) {
+  if (totalNetA < totalNetB) {
     totalPointA = 1;
     totalPointB = 0;
-  } else if (totalGrossB < totalGrossA) {
+  } else if (totalNetB < totalNetA) {
     totalPointA = 0;
     totalPointB = 1;
   } else {
