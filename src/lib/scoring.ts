@@ -5,6 +5,70 @@ export const HOLE_COUNT = 9;
 /** Hole handicaps — lower number = harder hole = gets strokes first */
 export const HOLE_HANDICAPS = [9, 17, 7, 1, 3, 13, 5, 15, 11];
 
+import { calculateHandicap } from './types';
+import type { ScheduleData, PlayerProfile } from './types';
+
+// ── Dynamic Handicap ──
+
+/**
+ * Compute a player's handicap for a given week.
+ * - Week 0 (first week): based on previous season average only
+ * - Week 1+: previous season avg + all completed weekly scores averaged together
+ * - Previous season avg counts as one data point alongside weekly scores
+ * - If no previous season avg and no scores: handicap = 0
+ */
+export function getWeeklyHandicap(
+  playerName: string,
+  weekIndex: number,
+  scheduleData: ScheduleData,
+  playerProfiles: PlayerProfile[]
+): number {
+  const profile = playerProfiles.find((p) => p.name === playerName);
+  if (!profile) return 0;
+
+  // Find this player's index in the schedule
+  const playerIdx = scheduleData.players.indexOf(playerName);
+  if (playerIdx === -1) return profile.handicap;
+
+  const scores = scheduleData.scores || {};
+  const subs = scheduleData.substitutions || {};
+
+  // Collect all gross totals from weeks BEFORE this one
+  const weeklyTotals: number[] = [];
+  for (let w = 0; w < weekIndex && w < scheduleData.weeks.length; w++) {
+    // Skip if this player was subbed out or Casper this week
+    const sub = subs[`${w}-${playerIdx}`];
+    if (sub) continue; // sub played or Casper — don't count toward handicap
+
+    // Check if all 9 holes have scores for this week
+    const holeScores: number[] = [];
+    let complete = true;
+    for (let h = 0; h < HOLE_COUNT; h++) {
+      const s = scores[`${w}-${playerIdx}-${h}`];
+      if (s === undefined) {
+        complete = false;
+        break;
+      }
+      holeScores.push(s);
+    }
+    if (complete) {
+      weeklyTotals.push(holeScores.reduce((a, b) => a + b, 0));
+    }
+  }
+
+  // Build the data points: previous season avg (if exists) + weekly scores
+  const dataPoints: number[] = [];
+  if (profile.previousSeasonAvg !== null) {
+    dataPoints.push(profile.previousSeasonAvg);
+  }
+  dataPoints.push(...weeklyTotals);
+
+  if (dataPoints.length === 0) return profile.handicap;
+
+  const avg = dataPoints.reduce((a, b) => a + b, 0) / dataPoints.length;
+  return calculateHandicap(avg);
+}
+
 /**
  * Rank of each hole by difficulty (1 = hardest).
  * Holes with lower hole-handicap values are ranked first.

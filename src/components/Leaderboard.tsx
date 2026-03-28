@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { ScheduleData, PlayerProfile } from '../lib/types';
-import { HOLE_COUNT, calculateMatchResult } from '../lib/scoring';
+import { HOLE_COUNT, calculateMatchResult, getWeeklyHandicap } from '../lib/scoring';
 
 interface Props {
   scheduleData: ScheduleData | null;
@@ -27,9 +27,8 @@ export default function Leaderboard({ scheduleData, playerProfiles }: Props) {
     const numPlayers = scheduleData.players.length;
     const numWeeks = scheduleData.weeks.length;
 
-    function getHandicap(name: string): number {
-      const p = playerProfiles.find((pp) => pp.name === name);
-      return p ? p.handicap : 0;
+    function getHandicap(name: string, weekIndex: number): number {
+      return getWeeklyHandicap(name, weekIndex, scheduleData!, playerProfiles);
     }
 
     // Initialize entries
@@ -58,8 +57,8 @@ export default function Leaderboard({ scheduleData, playerProfiles }: Props) {
           const casperA = subA === 'Casper';
           const casperB = subB === 'Casper';
 
-          const hcpA = subA && !casperA ? getHandicap(subA) : getHandicap(scheduleData.players[a]);
-          const hcpB = subB && !casperB ? getHandicap(subB) : getHandicap(scheduleData.players[b]);
+          const hcpA = subA && !casperA ? getHandicap(subA, w) : getHandicap(scheduleData.players[a], w);
+          const hcpB = subB && !casperB ? getHandicap(subB, w) : getHandicap(scheduleData.players[b], w);
 
           const grossA: (number | undefined)[] = [];
           const grossB: (number | undefined)[] = [];

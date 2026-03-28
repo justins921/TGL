@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { generateSchedule, computeStats } from '../lib/scheduleEngine';
-import { HOLE_COUNT } from '../lib/scoring';
+import { HOLE_COUNT, getWeeklyHandicap } from '../lib/scoring';
 import { DEFAULT_ROSTER } from '../lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from '../lib/types';
 import MatchScorecard from './MatchScorecard';
@@ -188,11 +188,14 @@ export default function Schedule({
   );
 
   const getHandicap = useCallback(
-    (playerName: string): number => {
-      const profile = playerProfiles.find((p) => p.name === playerName);
-      return profile ? profile.handicap : 0;
+    (playerName: string, weekIndex: number): number => {
+      if (!scheduleData) {
+        const profile = playerProfiles.find((p) => p.name === playerName);
+        return profile ? profile.handicap : 0;
+      }
+      return getWeeklyHandicap(playerName, weekIndex, scheduleData, playerProfiles);
     },
-    [playerProfiles]
+    [playerProfiles, scheduleData]
   );
 
   const handleWeekDateChange = useCallback(
@@ -539,8 +542,8 @@ export default function Schedule({
                       const subs = scheduleData.substitutions || {};
                       const subA = subs[`${weekIndex}-${a}`];
                       const subB = subs[`${weekIndex}-${b}`];
-                      const subHandicapA = subA && subA !== 'Casper' ? getHandicap(subA) : undefined;
-                      const subHandicapB = subB && subB !== 'Casper' ? getHandicap(subB) : undefined;
+                      const subHandicapA = subA && subA !== 'Casper' ? getHandicap(subA, weekIndex) : undefined;
+                      const subHandicapB = subB && subB !== 'Casper' ? getHandicap(subB, weekIndex) : undefined;
                       const availableSubs = scheduleData.subs || [];
 
                       // Check if any scores exist for this match
@@ -579,8 +582,8 @@ export default function Schedule({
                               playerBIndex={b}
                               playerAName={scheduleData.players[a]}
                               playerBName={scheduleData.players[b]}
-                              handicapA={getHandicap(scheduleData.players[a])}
-                              handicapB={getHandicap(scheduleData.players[b])}
+                              handicapA={getHandicap(scheduleData.players[a], weekIndex)}
+                              handicapB={getHandicap(scheduleData.players[b], weekIndex)}
                               subA={subA}
                               subB={subB}
                               subHandicapA={subHandicapA}

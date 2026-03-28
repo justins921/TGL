@@ -218,8 +218,8 @@ export default function Players({ players, onSave, onDelete, isAdmin }: Props) {
                 type="number"
                 min={0}
                 max={MAX_HANDICAP}
-                step="0.1"
-                value={Math.round(draft.handicap * 10) / 10}
+                step="1"
+                value={draft.handicap}
                 readOnly={draft.previousSeasonAvg !== null}
                 style={draft.previousSeasonAvg !== null ? { opacity: 0.7, cursor: 'not-allowed' } : undefined}
                 onChange={(e) => {
@@ -371,7 +371,7 @@ function PlayerCard({
             {player.isSub && <span className="pd-sub-badge">SUB</span>}
           </div>
           <div className="pd-player-meta">
-            HCP {Math.round(player.handicap * 10) / 10}
+            HCP {player.handicap}
             {avg && <> &middot; Avg {avg}</>}
             {player.previousSeasonAvg !== null && (
               <> &middot; Prev {player.previousSeasonAvg}</>
@@ -397,7 +397,7 @@ function PlayerCard({
           )}
           <div className="pd-detail-row">
             <span className="pd-detail-label">Handicap</span>
-            <span className="pd-detail-value">{Math.round(player.handicap * 10) / 10}</span>
+            <span className="pd-detail-value">{player.handicap}</span>
           </div>
           {player.previousSeasonAvg !== null && (
             <div className="pd-detail-row">

@@ -110,7 +110,7 @@ export default function MatchScorecard({
                 <span className={`sc-player-name${result && result.totalPointsA > result.totalPointsB ? ' sc-match-winner' : ''}`}>
                   {displayA}
                 </span>
-                <span className="sc-hcp">({Math.round(effectiveHcpA * 10) / 10})</span>
+                <span className="sc-hcp">({effectiveHcpA})</span>
                 {subLabelA && (
                   <span className={`sc-sub-badge${casperA ? ' sc-casper-badge' : ''}`}>
                     {subLabelA}
@@ -144,7 +144,7 @@ export default function MatchScorecard({
                 <span className={`sc-player-name${result && result.totalPointsB > result.totalPointsA ? ' sc-match-winner' : ''}`}>
                   {displayB}
                 </span>
-                <span className="sc-hcp">({Math.round(effectiveHcpB * 10) / 10})</span>
+                <span className="sc-hcp">({effectiveHcpB})</span>
                 {subLabelB && (
                   <span className={`sc-sub-badge${casperB ? ' sc-casper-badge' : ''}`}>
                     {subLabelB}
@@ -174,7 +174,7 @@ export default function MatchScorecard({
             </tr>
 
             {/* Strokes given row (hide for Casper matches) */}
-            {result && !casperA && !casperB && Math.round(effectiveHcpA) !== Math.round(effectiveHcpB) && (
+            {result && !casperA && !casperB && effectiveHcpA !== effectiveHcpB && (
               <tr className="sc-strokes-row">
                 <td className="sc-label-col sc-strokes-label">Strokes</td>
                 {Array.from({ length: HOLE_COUNT }, (_, h) => {
