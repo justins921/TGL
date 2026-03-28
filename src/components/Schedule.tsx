@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { generateSchedule, computeStats } from '../lib/scheduleEngine';
 import { DEFAULT_ROSTER } from '../lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from '../lib/types';
+import MatchScorecard from './MatchScorecard';
 
 const DEFAULT_PLAYERS = DEFAULT_ROSTER.filter((r) => !r.isSub).map((r) => r.name);
 const DEFAULT_SUBS = DEFAULT_ROSTER.filter((r) => r.isSub).map((r) => r.name);
@@ -156,10 +157,10 @@ export default function Schedule({
   );
 
   const handleScoreChange = useCallback(
-    (weekIndex: number, playerIndex: number, value: string) => {
+    (weekIndex: number, playerIndex: number, holeIndex: number, value: string) => {
       if (!scheduleData) return;
       const scores = { ...(scheduleData.scores || {}) };
-      const key = `${weekIndex}-${playerIndex}`;
+      const key = `${weekIndex}-${playerIndex}-${holeIndex}`;
       if (value === '') {
         delete scores[key];
       } else {
@@ -510,83 +511,23 @@ export default function Schedule({
                 {week.foursomes.map((foursome, fIdx) => (
                   <div key={fIdx} className="foursome-card">
                     <div className="foursome-title">Foursome {fIdx + 1}</div>
-                    {foursome.matchups.map(([a, b], mIdx) => {
-                      const scores = scheduleData.scores || {};
-                      const scoreA = scores[`${weekIndex}-${a}`];
-                      const scoreB = scores[`${weekIndex}-${b}`];
-                      const hcpA = getHandicap(scheduleData.players[a]);
-                      const hcpB = getHandicap(scheduleData.players[b]);
-                      const hasScores = scoreA !== undefined && scoreB !== undefined;
-                      const netA = hasScores ? scoreA - hcpA : null;
-                      const netB = hasScores ? scoreB - hcpB : null;
-                      const winnerA = netA !== null && netB !== null && netA < netB;
-                      const winnerB = netA !== null && netB !== null && netB < netA;
-                      const tie = netA !== null && netB !== null && netA === netB;
-
-                      return (
-                        <div key={mIdx} className="matchup-row">
-                          <div className="match-label">Match {mIdx + 1}</div>
-                          <div className="match-players">
-                            <span className={`player-name${winnerA ? ' match-winner' : ''}`}>
-                              {scheduleData.players[a]}
-                            </span>
-                            <span className="vs-badge">VS</span>
-                            <span className={`player-name${winnerB ? ' match-winner' : ''}`}>
-                              {scheduleData.players[b]}
-                            </span>
-                          </div>
-                          <div className="match-scores">
-                            <div className="score-entry">
-                              {isAdmin ? (
-                                <input
-                                  className="score-input"
-                                  type="number"
-                                  placeholder="Score"
-                                  value={scoreA ?? ''}
-                                  onChange={(e) => handleScoreChange(weekIndex, a, e.target.value)}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              ) : (
-                                scoreA !== undefined && (
-                                  <span className="score-display">{scoreA}</span>
-                                )
-                              )}
-                              {hasScores && (
-                                <span className={`net-score${winnerA ? ' net-winner' : ''}`}>
-                                  Net {netA!.toFixed(1)}
-                                </span>
-                              )}
-                              {hasScores && winnerA && <span className="match-win-badge">W</span>}
-                            </div>
-                            <div className="score-result">
-                              {hasScores && tie && <span className="match-tie">TIE</span>}
-                            </div>
-                            <div className="score-entry">
-                              {isAdmin ? (
-                                <input
-                                  className="score-input"
-                                  type="number"
-                                  placeholder="Score"
-                                  value={scoreB ?? ''}
-                                  onChange={(e) => handleScoreChange(weekIndex, b, e.target.value)}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              ) : (
-                                scoreB !== undefined && (
-                                  <span className="score-display">{scoreB}</span>
-                                )
-                              )}
-                              {hasScores && (
-                                <span className={`net-score${winnerB ? ' net-winner' : ''}`}>
-                                  Net {netB!.toFixed(1)}
-                                </span>
-                              )}
-                              {hasScores && winnerB && <span className="match-win-badge">W</span>}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {foursome.matchups.map(([a, b], mIdx) => (
+                      <div key={mIdx} className="matchup-row">
+                        <div className="match-label">Match {mIdx + 1}</div>
+                        <MatchScorecard
+                          weekIndex={weekIndex}
+                          playerAIndex={a}
+                          playerBIndex={b}
+                          playerAName={scheduleData.players[a]}
+                          playerBName={scheduleData.players[b]}
+                          handicapA={getHandicap(scheduleData.players[a])}
+                          handicapB={getHandicap(scheduleData.players[b])}
+                          scores={scheduleData.scores || {}}
+                          onScoreChange={handleScoreChange}
+                          isAdmin={isAdmin}
+                        />
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>

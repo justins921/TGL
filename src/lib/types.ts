@@ -22,7 +22,7 @@ export interface ScheduleData {
   foursomeCount: Record<string, number>;
   matchupCount: Record<string, number>;
   byeCount: number[];
-  scores?: Record<string, number>; // "weekIndex-playerIndex" -> gross score
+  scores?: Record<string, number>; // "weekIndex-playerIndex-holeIndex" -> gross strokes
   weekDates?: string[]; // ISO date string per week, editable for rain outs
 }
 

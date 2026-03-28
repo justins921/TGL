@@ -726,87 +726,195 @@ input, select {
   flex-shrink: 0;
 }
 
-/* ── Match Scoring ── */
-.match-scores {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 6px;
+/* ── Match Scorecard ── */
+.scorecard {
+  margin-top: 8px;
 }
 
-.score-entry {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  gap: 2px;
+.scorecard-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.score-input {
-  width: 72px;
-  padding: 4px 6px;
+.scorecard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 520px;
+}
+
+.scorecard-table th,
+.scorecard-table td {
+  padding: 4px 2px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.scorecard-table thead th {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 2px solid var(--border);
+}
+
+.sc-label-col {
+  text-align: left !important;
+  min-width: 90px;
+  max-width: 120px;
+  padding-left: 4px !important;
+}
+
+.sc-hole-col {
+  width: 38px;
+  min-width: 38px;
+}
+
+.sc-total-col {
+  width: 48px;
+  min-width: 48px;
+  font-weight: 700;
+  border-left: 2px solid var(--border);
+}
+
+.sc-hh-row td {
+  font-size: 10px;
+  color: var(--muted);
+  padding: 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sc-player-row td {
+  border-bottom: 1px solid var(--border);
+}
+
+.sc-player-label {
+  text-align: left !important;
+  padding-left: 4px !important;
+}
+
+.sc-player-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.sc-player-name.sc-match-winner {
+  color: var(--green-700);
+}
+
+.sc-hcp {
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: 3px;
+}
+
+.sc-score-input {
+  width: 34px;
+  padding: 3px 1px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
+  border-radius: 4px;
+  font-size: 13px;
   font-weight: 600;
   text-align: center;
   background: var(--card);
   color: var(--text);
 }
 
-.score-input:focus {
+.sc-score-input:focus {
   outline: none;
   border-color: var(--green-600);
-  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.2);
 }
 
-.score-display {
-  font-size: 14px;
+/* Hide number input arrows */
+.sc-score-input::-webkit-inner-spin-button,
+.sc-score-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.sc-score-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.sc-score-val {
   font-weight: 600;
-  color: var(--text);
+  font-size: 13px;
 }
 
-.net-score {
-  font-size: 11px;
+.sc-total-val {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sc-strokes-row td {
+  font-size: 10px;
+  padding: 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sc-strokes-label {
+  font-size: 10px;
   color: var(--muted);
+  text-align: left !important;
+  padding-left: 4px !important;
 }
 
-.net-score.net-winner {
+.sc-stroke-dot {
+  color: var(--green-700);
+  font-size: 8px;
+}
+
+.sc-stroke-cell {
+  line-height: 1;
+}
+
+.sc-points-row td {
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sc-pts-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: left !important;
+  padding-left: 4px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sc-pts {
+  color: var(--text-secondary);
+}
+
+.sc-pts.sc-pts-win {
   color: var(--green-700);
   font-weight: 700;
 }
 
-.score-result {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  padding-top: 4px;
-}
-
-.match-win-badge {
-  background: var(--green-700);
-  color: #fff;
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-
-.match-tie {
-  background: var(--surface);
+.sc-pts.sc-pts-lose {
   color: var(--muted);
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  opacity: 0.5;
 }
 
-.player-name.match-winner {
+.sc-pts-total {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sc-pts-total.sc-pts-win {
   color: var(--green-700);
+}
+
+.sc-empty-hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 8px 4px !important;
+  text-align: left !important;
 }
 
 /* ── Page Layout ── */
