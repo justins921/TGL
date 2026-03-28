@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { calculateHandicap } from '../lib/types';
 import type { PlayerProfile, WeeklyResult } from '../lib/types';
 
 const MAX_HANDICAP = 10;
@@ -204,14 +205,25 @@ export default function Players({ players, onSave, onDelete, isAdmin }: Props) {
 
           <div className="pd-form-row">
             <div className="pd-form-field">
-              <label>Handicap (0-{MAX_HANDICAP})</label>
+              <label>
+                Handicap (0-{MAX_HANDICAP})
+                {draft.previousSeasonAvg !== null && (
+                  <span style={{ fontWeight: 'normal', fontSize: '0.85em', opacity: 0.7 }}>
+                    {' '}&mdash; auto-calculated from avg
+                  </span>
+                )}
+              </label>
               <input
                 className="name-input"
                 type="number"
                 min={0}
                 max={MAX_HANDICAP}
-                value={draft.handicap}
+                step="0.1"
+                value={Math.round(draft.handicap * 10) / 10}
+                readOnly={draft.previousSeasonAvg !== null}
+                style={draft.previousSeasonAvg !== null ? { opacity: 0.7, cursor: 'not-allowed' } : undefined}
                 onChange={(e) => {
+                  if (draft.previousSeasonAvg !== null) return;
                   const val = parseFloat(e.target.value) || 0;
                   updateDraft({
                     handicap: Math.min(MAX_HANDICAP, Math.max(0, val)),
@@ -228,8 +240,10 @@ export default function Players({ players, onSave, onDelete, isAdmin }: Props) {
                 value={draft.previousSeasonAvg ?? ''}
                 onChange={(e) => {
                   const raw = e.target.value;
+                  const avg = raw === '' ? null : parseFloat(raw) || 0;
                   updateDraft({
-                    previousSeasonAvg: raw === '' ? null : parseFloat(raw) || 0,
+                    previousSeasonAvg: avg,
+                    handicap: avg !== null ? calculateHandicap(avg) : draft.handicap,
                   });
                 }}
               />
@@ -357,7 +371,7 @@ function PlayerCard({
             {player.isSub && <span className="pd-sub-badge">SUB</span>}
           </div>
           <div className="pd-player-meta">
-            HCP {player.handicap}
+            HCP {Math.round(player.handicap * 10) / 10}
             {avg && <> &middot; Avg {avg}</>}
             {player.previousSeasonAvg !== null && (
               <> &middot; Prev {player.previousSeasonAvg}</>
@@ -383,7 +397,7 @@ function PlayerCard({
           )}
           <div className="pd-detail-row">
             <span className="pd-detail-label">Handicap</span>
-            <span className="pd-detail-value">{player.handicap}</span>
+            <span className="pd-detail-value">{Math.round(player.handicap * 10) / 10}</span>
           </div>
           {player.previousSeasonAvg !== null && (
             <div className="pd-detail-row">

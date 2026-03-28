@@ -61,6 +61,11 @@ export interface WeeklyResult {
   score: number;
 }
 
+/** Calculate handicap from previous season average: MIN((avg - 36) * 0.7, 10), floored at 0 */
+export function calculateHandicap(previousSeasonAvg: number): number {
+  return Math.min(Math.max((previousSeasonAvg - 36) * 0.7, 0), 10);
+}
+
 export interface PlayerProfile {
   id: string;
   name: string;
