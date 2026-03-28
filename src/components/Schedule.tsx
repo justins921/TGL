@@ -5,7 +5,7 @@ import type { ScheduleData, SavedSchedule, PlayerProfile } from '../lib/types';
 
 const DEFAULT_PLAYERS = DEFAULT_ROSTER.filter((r) => !r.isSub).map((r) => r.name);
 const DEFAULT_SUBS = DEFAULT_ROSTER.filter((r) => r.isSub).map((r) => r.name);
-const DEFAULT_START_DATE = '2025-05-06'; // First Tuesday - May 6, 2025
+const DEFAULT_START_DATE = '2026-05-05'; // First Tuesday - May 5, 2026
 
 function generateWeekDates(startDate: string, numWeeks: number): string[] {
   const dates: string[] = [];
