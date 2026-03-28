@@ -917,6 +917,88 @@ input, select {
   text-align: left !important;
 }
 
+/* Sub/Casper indicators */
+.sc-sub-badge {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--green-700);
+  line-height: 1.2;
+}
+
+.sc-sub-badge.sc-casper-badge {
+  color: var(--danger);
+}
+
+.sc-casper-row td {
+  opacity: 0.5;
+}
+
+.sc-casper-row .sc-player-label {
+  opacity: 1;
+}
+
+.sc-casper-x {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.sc-casper-pts-cell {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Sub selector (admin) */
+.match-sub-selectors {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.match-sub-vs {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.sub-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sub-selector-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub-selector-dropdown {
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  min-width: 70px;
+}
+
+.sub-selector-dropdown:focus {
+  outline: none;
+  border-color: var(--green-600);
+}
+
 /* ── Page Layout ── */
 .page-content {
   max-width: 640px;

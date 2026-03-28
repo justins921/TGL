@@ -171,6 +171,21 @@ export default function Schedule({
     [scheduleData, setScheduleData]
   );
 
+  const handleSubChange = useCallback(
+    (weekIndex: number, playerIndex: number, value: string) => {
+      if (!scheduleData) return;
+      const subs = { ...(scheduleData.substitutions || {}) };
+      const key = `${weekIndex}-${playerIndex}`;
+      if (value === '') {
+        delete subs[key];
+      } else {
+        subs[key] = value;
+      }
+      setScheduleData({ ...scheduleData, substitutions: subs });
+    },
+    [scheduleData, setScheduleData]
+  );
+
   const getHandicap = useCallback(
     (playerName: string): number => {
       const profile = playerProfiles.find((p) => p.name === playerName);
@@ -511,23 +526,53 @@ export default function Schedule({
                 {week.foursomes.map((foursome, fIdx) => (
                   <div key={fIdx} className="foursome-card">
                     <div className="foursome-title">Foursome {fIdx + 1}</div>
-                    {foursome.matchups.map(([a, b], mIdx) => (
-                      <div key={mIdx} className="matchup-row">
-                        <div className="match-label">Match {mIdx + 1}</div>
-                        <MatchScorecard
-                          weekIndex={weekIndex}
-                          playerAIndex={a}
-                          playerBIndex={b}
-                          playerAName={scheduleData.players[a]}
-                          playerBName={scheduleData.players[b]}
-                          handicapA={getHandicap(scheduleData.players[a])}
-                          handicapB={getHandicap(scheduleData.players[b])}
-                          scores={scheduleData.scores || {}}
-                          onScoreChange={handleScoreChange}
-                          isAdmin={isAdmin}
-                        />
-                      </div>
-                    ))}
+                    {foursome.matchups.map(([a, b], mIdx) => {
+                      const subs = scheduleData.substitutions || {};
+                      const subA = subs[`${weekIndex}-${a}`];
+                      const subB = subs[`${weekIndex}-${b}`];
+                      const subHandicapA = subA && subA !== 'Casper' ? getHandicap(subA) : undefined;
+                      const subHandicapB = subB && subB !== 'Casper' ? getHandicap(subB) : undefined;
+                      const availableSubs = scheduleData.subs || [];
+
+                      return (
+                        <div key={mIdx} className="matchup-row">
+                          <div className="match-label">Match {mIdx + 1}</div>
+                          {isAdmin && (
+                            <div className="match-sub-selectors">
+                              <SubSelector
+                                playerName={scheduleData.players[a]}
+                                value={subA || ''}
+                                availableSubs={availableSubs}
+                                onChange={(val) => handleSubChange(weekIndex, a, val)}
+                              />
+                              <span className="match-sub-vs">vs</span>
+                              <SubSelector
+                                playerName={scheduleData.players[b]}
+                                value={subB || ''}
+                                availableSubs={availableSubs}
+                                onChange={(val) => handleSubChange(weekIndex, b, val)}
+                              />
+                            </div>
+                          )}
+                          <MatchScorecard
+                            weekIndex={weekIndex}
+                            playerAIndex={a}
+                            playerBIndex={b}
+                            playerAName={scheduleData.players[a]}
+                            playerBName={scheduleData.players[b]}
+                            handicapA={getHandicap(scheduleData.players[a])}
+                            handicapB={getHandicap(scheduleData.players[b])}
+                            subA={subA}
+                            subB={subB}
+                            subHandicapA={subHandicapA}
+                            subHandicapB={subHandicapB}
+                            scores={scheduleData.scores || {}}
+                            onScoreChange={handleScoreChange}
+                            isAdmin={isAdmin}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
@@ -571,6 +616,36 @@ function SavedScheduleRow({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+function SubSelector({
+  playerName,
+  value,
+  availableSubs,
+  onChange,
+}: {
+  playerName: string;
+  value: string;
+  availableSubs: string[];
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="sub-selector">
+      <span className="sub-selector-name">{playerName}</span>
+      <select
+        className="sub-selector-dropdown"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <option value="">Playing</option>
+        {availableSubs.map((sub) => (
+          <option key={sub} value={sub}>{sub}</option>
+        ))}
+        <option value="Casper">Casper</option>
+      </select>
     </div>
   );
 }
