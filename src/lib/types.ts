@@ -23,6 +23,7 @@ export interface ScheduleData {
   matchupCount: Record<string, number>;
   byeCount: number[];
   scores?: Record<string, number>; // "weekIndex-playerIndex" -> gross score
+  weekDates?: string[]; // ISO date string per week, editable for rain outs
 }
 
 export interface PlayerWeekEntry {
@@ -77,4 +78,39 @@ export interface PlayerProfile {
   previousSeasonAvg: number | null;
   isSub: boolean;
   weeklyResults: WeeklyResult[];
+}
+
+export const DEFAULT_ROSTER: { name: string; avg: number | null; isSub: boolean }[] = [
+  { name: 'Bryon A', avg: 46.6, isSub: false },
+  { name: 'Buddha', avg: 46.7, isSub: false },
+  { name: 'David L', avg: 48.3, isSub: false },
+  { name: 'Jeff B', avg: 44.1, isSub: false },
+  { name: 'John M', avg: 46.0, isSub: false },
+  { name: 'Justin S', avg: 44.9, isSub: false },
+  { name: 'Mark L', avg: 47.3, isSub: false },
+  { name: 'Mike S', avg: 46.1, isSub: false },
+  { name: 'Rudy', avg: 49.1, isSub: false },
+  { name: 'Terry S', avg: 48.6, isSub: false },
+  { name: 'Tim B', avg: 47.2, isSub: false },
+  { name: 'Tim M', avg: 46.1, isSub: false },
+  { name: 'Tom K', avg: 51.0, isSub: false },
+  { name: 'Lee N', avg: null, isSub: false },
+  { name: 'Phil P', avg: null, isSub: false },
+  { name: 'Joe D', avg: null, isSub: false },
+  { name: 'Kevin F', avg: null, isSub: false },
+  { name: 'Dan L', avg: 48.5, isSub: true },
+];
+
+export function buildDefaultProfiles(): PlayerProfile[] {
+  return DEFAULT_ROSTER.map((entry, i) => ({
+    id: `default-${i}`,
+    name: entry.name,
+    email: '',
+    phone: '',
+    photoUrl: '',
+    handicap: entry.avg !== null ? calculateHandicap(entry.avg) : 0,
+    previousSeasonAvg: entry.avg,
+    isSub: entry.isSub,
+    weeklyResults: [],
+  }));
 }

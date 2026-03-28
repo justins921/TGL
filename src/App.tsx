@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { buildDefaultProfiles } from './lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from './lib/types';
 import { loadSchedules, saveSchedule, deleteSchedule, loadPlayers, savePlayer, deletePlayer } from './lib/storage';
 import { AuthProvider, useAuth } from './lib/auth';
@@ -26,7 +27,15 @@ function AppContent() {
         setScheduleData(schedules[0].data);
       }
     });
-    loadPlayers().then(setPlayers);
+    loadPlayers().then((loaded) => {
+      if (loaded.length === 0) {
+        const defaults = buildDefaultProfiles();
+        setPlayers(defaults);
+        defaults.forEach((p) => savePlayer(p));
+      } else {
+        setPlayers(loaded);
+      }
+    });
   }, []);
 
   const handleSave = useCallback(async () => {

@@ -618,11 +618,39 @@ input, select {
   flex-wrap: wrap;
 }
 
+.week-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .week-title {
   font-size: 17px;
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.01em;
+}
+
+.week-date {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.week-date-input {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.week-date-input:focus {
+  outline: none;
+  border-color: var(--green-600);
 }
 
 .bye-tag {

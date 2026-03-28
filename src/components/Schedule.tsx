@@ -1,12 +1,27 @@
 import { useState, useCallback } from 'react';
 import { generateSchedule, computeStats } from '../lib/scheduleEngine';
+import { DEFAULT_ROSTER } from '../lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from '../lib/types';
 
-const DEFAULT_PLAYERS = [
-  'Bryon A', 'Buddha', 'David L', 'Jeff B', 'John M', 'Justin S',
-  'Mark L', 'Mike S', 'Rudy', 'Terry S', 'Tim B', 'Tim M',
-  'Tom K', 'Lee N', 'Kevin F', 'Joe D', 'Phil P',
-];
+const DEFAULT_PLAYERS = DEFAULT_ROSTER.filter((r) => !r.isSub).map((r) => r.name);
+const DEFAULT_SUBS = DEFAULT_ROSTER.filter((r) => r.isSub).map((r) => r.name);
+const DEFAULT_START_DATE = '2025-05-06'; // First Tuesday - May 6, 2025
+
+function generateWeekDates(startDate: string, numWeeks: number): string[] {
+  const dates: string[] = [];
+  const start = new Date(startDate + 'T12:00:00');
+  for (let i = 0; i < numWeeks; i++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i * 7);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+function formatDate(isoDate: string): string {
+  const d = new Date(isoDate + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
 
 interface Props {
   scheduleData: ScheduleData | null;
@@ -29,12 +44,13 @@ export default function Schedule({
   isAdmin,
   playerProfiles,
 }: Props) {
-  const [numPlayers, setNumPlayers] = useState('17');
-  const [numWeeks, setNumWeeks] = useState('17');
+  const [numPlayers, setNumPlayers] = useState(String(DEFAULT_PLAYERS.length));
+  const [numWeeks, setNumWeeks] = useState(String(DEFAULT_PLAYERS.length));
   const [playerNames, setPlayerNames] = useState<string[]>([...DEFAULT_PLAYERS]);
   const [byeAssignments, setByeAssignments] = useState<Record<number, string>>({});
-  const [subNames, setSubNames] = useState<string[]>([]);
+  const [subNames, setSubNames] = useState<string[]>([...DEFAULT_SUBS]);
   const [newSubName, setNewSubName] = useState('');
+  const [startDate, setStartDate] = useState(DEFAULT_START_DATE);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSetup, setShowSetup] = useState(!scheduleData);
   const [swapSource, setSwapSource] = useState<number | null>(null);
@@ -106,6 +122,7 @@ export default function Schedule({
         });
 
         const data = generateSchedule(players, weekCount, assignedByes, subNames);
+        data.weekDates = generateWeekDates(startDate, weekCount);
         setScheduleData(data);
         setShowSetup(false);
         onNewSchedule();
@@ -159,6 +176,16 @@ export default function Schedule({
       return profile ? profile.handicap : 0;
     },
     [playerProfiles]
+  );
+
+  const handleWeekDateChange = useCallback(
+    (weekIndex: number, newDate: string) => {
+      if (!scheduleData) return;
+      const dates = [...(scheduleData.weekDates || [])];
+      dates[weekIndex] = newDate;
+      setScheduleData({ ...scheduleData, weekDates: dates });
+    },
+    [scheduleData, setScheduleData]
   );
 
   const stats = scheduleData ? computeStats(scheduleData) : null;
@@ -221,6 +248,17 @@ export default function Schedule({
                     onChange={(e) => setNumWeeks(e.target.value)}
                     min={1}
                     max={52}
+                  />
+                </div>
+              </div>
+              <div className="form-row" style={{ marginTop: 12 }}>
+                <div className="form-group">
+                  <label>Week 1 Start Date</label>
+                  <input
+                    className="form-input"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                   />
                 </div>
               </div>
@@ -433,7 +471,22 @@ export default function Schedule({
                 onClick={isSwapTarget ? () => handleSwapWeek(weekIndex) : undefined}
               >
                 <div className="week-header">
-                  <div className="week-title">Week {weekIndex + 1}</div>
+                  <div className="week-title-group">
+                    <div className="week-title">Week {weekIndex + 1}</div>
+                    {scheduleData.weekDates?.[weekIndex] && (
+                      isAdmin ? (
+                        <input
+                          className="week-date-input"
+                          type="date"
+                          value={scheduleData.weekDates[weekIndex]}
+                          onChange={(e) => handleWeekDateChange(weekIndex, e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <div className="week-date">{formatDate(scheduleData.weekDates[weekIndex])}</div>
+                      )
+                    )}
+                  </div>
                   <div className="week-header-actions">
                     {week.byePlayers.length > 0 && (
                       <span className="bye-tag">
