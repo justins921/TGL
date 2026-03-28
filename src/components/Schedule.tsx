@@ -373,8 +373,8 @@ export default function Schedule({
               )}
             </button>
 
-            {/* Saved Schedules */}
-            {savedSchedules.length > 0 && (
+            {/* Saved Schedules - admin only */}
+            {isAdmin && savedSchedules.length > 0 && (
               <div className="card">
                 <div className="card-title">Saved Schedules</div>
                 {savedSchedules.map((saved) => (
@@ -424,8 +424,8 @@ export default function Schedule({
               </div>
             )}
 
-            {/* Subs */}
-            {scheduleData && scheduleData.subs.length > 0 && (
+            {/* Subs - admin only */}
+            {isAdmin && scheduleData && scheduleData.subs.length > 0 && (
               <div className="card">
                 <div className="card-title">Substitute Players</div>
                 <div className="subs-list">
@@ -467,8 +467,8 @@ export default function Schedule({
               </div>
             )}
 
-            {/* Saved Schedules */}
-            {savedSchedules.length > 0 && (
+            {/* Saved Schedules - admin only */}
+            {isAdmin && savedSchedules.length > 0 && (
               <div className="card">
                 <div className="card-title">Saved Schedules</div>
                 {savedSchedules.map((saved) => (
