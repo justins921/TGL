@@ -2134,25 +2134,237 @@ input, select {
 }
 
 /* ── Responsive ── */
+
+/* Tablet and below */
+@media (max-width: 768px) {
+  /* Tab bar: horizontal scroll instead of squishing */
+  .tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .tab-btn {
+    flex: 0 0 auto;
+    padding: 12px 14px;
+    font-size: 13px;
+    gap: 4px;
+    white-space: nowrap;
+  }
+}
+
+/* Phone */
 @media (max-width: 480px) {
+  .banner {
+    padding: 20px 12px 16px;
+  }
   .banner h1 {
-    font-size: 22px;
+    font-size: 20px;
   }
+  .banner p {
+    font-size: 12px;
+  }
+  .banner-icon {
+    font-size: 28px;
+  }
+
   .page-content {
-    padding: 12px;
+    padding: 10px;
+    gap: 10px;
   }
+
+  .card {
+    padding: 12px;
+    border-radius: 10px;
+  }
+  .card-title {
+    font-size: 15px;
+  }
+
+  /* Stats */
   .stats-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
+  .stat-chip {
+    padding: 8px;
+  }
+  .stat-value {
+    font-size: 16px;
+  }
+
+  /* Week cards */
+  .week-card {
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .week-title {
+    font-size: 15px;
+  }
+  .week-header {
+    gap: 4px;
+  }
+  .week-title-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  /* Foursome */
+  .foursome-card {
+    padding: 10px;
+  }
+  .foursome-title {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  /* Match players (unplayed) */
+  .match-players {
+    gap: 6px;
+  }
+  .player-name {
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .vs-badge {
+    font-size: 9px;
+    padding: 2px 8px;
+  }
+
+  /* Scorecard compact */
+  .scorecard-table {
+    min-width: 460px;
+  }
+  .sc-label-col {
+    min-width: 70px;
+    max-width: 90px;
+  }
+  .sc-hole-col {
+    width: 34px;
+    min-width: 34px;
+  }
+  .sc-score-input {
+    width: 30px;
+    font-size: 12px;
+    padding: 3px 0;
+  }
+  .sc-player-name {
+    font-size: 11px;
+  }
+  .sc-hcp {
+    font-size: 9px;
+  }
+  .sc-sub-badge {
+    font-size: 9px;
+  }
+
+  /* Sub selectors */
+  .match-sub-selectors {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  .match-sub-vs {
+    display: none;
+  }
+  .sub-selector {
+    justify-content: space-between;
+  }
+  .sub-selector-name {
+    font-size: 11px;
+  }
+  .sub-selector-dropdown {
+    font-size: 11px;
+    min-width: 80px;
+  }
+
+  /* Leaderboard */
+  .lb-table {
+    min-width: 340px;
+  }
+  .lb-table th {
+    padding: 8px 4px;
+    font-size: 10px;
+  }
+  .lb-row td {
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+  .lb-name {
+    font-size: 12px;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lb-pts {
+    font-size: 13px;
+  }
+  .lb-stat {
+    font-size: 11px;
+  }
+  .lb-week-col {
+    font-size: 9px !important;
+    width: 36px;
+  }
+  .lb-week-pts {
+    font-size: 11px;
+  }
+
+  /* Bye assignments */
+  .bye-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Player directory */
+  .pd-form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .pd-player-header {
+    gap: 8px;
+  }
+
+  /* Action buttons */
+  .action-row {
+    flex-direction: column;
+  }
+  .action-btn {
+    width: 100%;
+  }
+  .generate-btn {
+    font-size: 15px;
+    padding: 14px;
+  }
+
+  /* Save strip */
+  .save-strip-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .save-strip-input {
+    width: 100%;
+  }
+  .save-strip-btn {
+    width: 100%;
+  }
+
+  /* Frequency bars */
   .freq-name {
     width: 60px;
     font-size: 11px;
   }
-  .save-banner-row {
+
+  /* Form inputs */
+  .form-row {
     flex-direction: column;
-  }
-  .save-banner-btn {
-    width: 100%;
+    gap: 10px;
   }
 }
 

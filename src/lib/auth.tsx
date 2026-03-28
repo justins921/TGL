@@ -27,8 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // When Supabase isn't configured, everyone is admin (local dev mode)
-  const isAdmin = !supabase ? true : !!user;
+  // Admin requires authentication — no Supabase means no admin access
+  const isAdmin = supabase ? !!user : false;
 
   useEffect(() => {
     if (!supabase) {
