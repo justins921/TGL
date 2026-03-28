@@ -11,7 +11,7 @@ import Leaderboard from './components/Leaderboard';
 import AdminLogin from './components/AdminLogin';
 
 function AppContent() {
-  const { isAdmin, user, signOut, loading: authLoading } = useAuth();
+  const { isAdmin, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players'>('schedule');
   const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
   const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>([]);
@@ -80,8 +80,6 @@ function AppContent() {
     setPlayers((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
-  if (authLoading) return null;
-
   return (
     <div>
       <nav className="tab-bar">
@@ -121,9 +119,9 @@ function AppContent() {
         )}
         <button
           className="tab-btn admin-btn"
-          onClick={() => (user ? signOut() : setShowLogin(true))}
+          onClick={() => (isAdmin ? signOut() : setShowLogin(true))}
         >
-          {user ? <>&#128275; Logout</> : <>&#128274; Admin</>}
+          {isAdmin ? <>&#128275; Logout</> : <>&#128274; Admin</>}
         </button>
       </nav>
 

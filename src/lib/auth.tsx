@@ -1,22 +1,19 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { supabase } from './supabase';
-import type { User } from '@supabase/supabase-js';
+
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD as string | undefined;
+const SESSION_KEY = 'tgl-admin-session';
 
 interface AuthState {
-  user: User | null;
   isAdmin: boolean;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<string | null>;
-  signOut: () => Promise<void>;
+  signIn: (password: string) => string | null;
+  signOut: () => void;
 }
 
 const AuthContext = createContext<AuthState>({
-  user: null,
   isAdmin: false,
-  loading: true,
-  signIn: async () => null,
-  signOut: async () => {},
+  signIn: () => null,
+  signOut: () => {},
 });
 
 export function useAuth() {
@@ -24,47 +21,28 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    if (!ADMIN_PASSWORD) return false;
+    return sessionStorage.getItem(SESSION_KEY) === 'true';
+  });
 
-  // Admin requires authentication — no Supabase means no admin access
-  const isAdmin = supabase ? !!user : false;
-
-  useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      return;
+  const signIn = useCallback((password: string): string | null => {
+    if (!ADMIN_PASSWORD) return 'Admin access is not configured';
+    if (password === ADMIN_PASSWORD) {
+      sessionStorage.setItem(SESSION_KEY, 'true');
+      setIsAdmin(true);
+      return null;
     }
-
-    // Check existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    return 'Incorrect password';
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string): Promise<string | null> => {
-    if (!supabase) return null;
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return error ? error.message : null;
-  }, []);
-
-  const signOut = useCallback(async () => {
-    if (!supabase) return;
-    await supabase.auth.signOut();
+  const signOut = useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setIsAdmin(false);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ isAdmin, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
