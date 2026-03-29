@@ -208,6 +208,22 @@ export default function Schedule({
     [scheduleData, setScheduleData]
   );
 
+  const handlePostponeWeek = useCallback(
+    (weekIndex: number) => {
+      if (!scheduleData?.weekDates) return;
+      const dates = [...scheduleData.weekDates];
+      for (let w = weekIndex; w < dates.length; w++) {
+        if (dates[w]) {
+          const d = new Date(dates[w] + 'T12:00:00');
+          d.setDate(d.getDate() + 7);
+          dates[w] = d.toISOString().slice(0, 10);
+        }
+      }
+      setScheduleData({ ...scheduleData, weekDates: dates });
+    },
+    [scheduleData, setScheduleData]
+  );
+
   const stats = scheduleData ? computeStats(scheduleData) : null;
 
   // Public viewers: if no schedule data, show a welcome message
@@ -522,15 +538,27 @@ export default function Schedule({
                       </span>
                     )}
                     {isAdmin && (
-                      <button
-                        className={`swap-btn${isSwapSource ? ' active' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSwapWeek(weekIndex);
-                        }}
-                      >
-                        {isSwapSource ? 'Cancel' : 'Swap'}
-                      </button>
+                      <>
+                        <button
+                          className="postpone-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePostponeWeek(weekIndex);
+                          }}
+                          title="Push this week and all following weeks back 7 days"
+                        >
+                          Rain Out
+                        </button>
+                        <button
+                          className={`swap-btn${isSwapSource ? ' active' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSwapWeek(weekIndex);
+                          }}
+                        >
+                          {isSwapSource ? 'Cancel' : 'Swap'}
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
