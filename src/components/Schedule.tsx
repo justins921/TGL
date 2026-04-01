@@ -34,6 +34,7 @@ export default function Schedule({
   const [playerNames, setPlayerNames] = useState<string[]>([...DEFAULT_PLAYERS]);
   const [byeAssignments, setByeAssignments] = useState<Record<number, string>>({});
   const [subNames, setSubNames] = useState<string[]>([...DEFAULT_SUBS]);
+  const [startDate, setStartDate] = useState('');
   const [newSubName, setNewSubName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSetup, setShowSetup] = useState(!scheduleData);
@@ -85,6 +86,16 @@ export default function Schedule({
   const getDisplayName = (index: number) =>
     playerNames[index]?.trim() || `Player ${index + 1}`;
 
+  const getWeekDate = (weekIndex: number): string | null => {
+    const base = scheduleData?.startDate;
+    if (!base) return null;
+    const d = new Date(base + 'T00:00:00');
+    d.setDate(d.getDate() + weekIndex * 7);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const needsByes = playerCount % 4 !== 0;
+
   const handleGenerate = useCallback(() => {
     if (playerCount < 4) return;
     setIsGenerating(true);
@@ -106,6 +117,7 @@ export default function Schedule({
         });
 
         const data = generateSchedule(players, weekCount, assignedByes, subNames);
+        if (startDate) data.startDate = startDate;
         setScheduleData(data);
         setShowSetup(false);
         onNewSchedule();
@@ -200,6 +212,15 @@ export default function Schedule({
                     max={52}
                   />
                 </div>
+                <div className="form-group">
+                  <label>Start Date</label>
+                  <input
+                    className="form-input"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
 
@@ -223,8 +244,8 @@ export default function Schedule({
               </div>
             )}
 
-            {/* Bye Week Assignments */}
-            {playerCount > 0 && weekCount > 0 && (
+            {/* Bye Week Assignments - only shown when player count isn't divisible by 4 */}
+            {needsByes && playerCount > 0 && weekCount > 0 && (
               <div className="card">
                 <div className="card-title">Bye Week Assignments</div>
                 <div className="card-subtitle">
@@ -333,12 +354,14 @@ export default function Schedule({
                     </div>
                     <div className="stat-label">Foursome Range</div>
                   </div>
-                  <div className="stat-chip">
-                    <div className="stat-value">
-                      {stats.byeMin}-{stats.byeMax}
+                  {(stats.byeMin > 0 || stats.byeMax > 0) && (
+                    <div className="stat-chip">
+                      <div className="stat-value">
+                        {stats.byeMin}-{stats.byeMax}
+                      </div>
+                      <div className="stat-label">Byes/Player</div>
                     </div>
-                    <div className="stat-label">Byes/Player</div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
@@ -410,7 +433,9 @@ export default function Schedule({
                 onClick={isSwapTarget ? () => handleSwapWeek(weekIndex) : undefined}
               >
                 <div className="week-header">
-                  <div className="week-title">Week {weekIndex + 1}</div>
+                  <div className="week-title">
+                    Week {weekIndex + 1}{getWeekDate(weekIndex) ? ` — ${getWeekDate(weekIndex)}` : ''}
+                  </div>
                   <div className="week-header-actions">
                     {week.byePlayers.length > 0 && (
                       <span className="bye-tag">

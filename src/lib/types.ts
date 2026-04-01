@@ -22,6 +22,7 @@ export interface ScheduleData {
   foursomeCount: Record<string, number>;
   matchupCount: Record<string, number>;
   byeCount: number[];
+  startDate?: string; // ISO date string for Week 1
 }
 
 export interface PlayerWeekEntry {
