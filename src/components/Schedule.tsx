@@ -320,8 +320,8 @@ export default function Schedule({
               </div>
             )}
 
-            {/* Bye Week Assignments */}
-            {playerCount > 0 && weekCount > 0 && (
+            {/* Bye Week Assignments - only when player count isn't divisible by 4 */}
+            {playerCount % 4 !== 0 && playerCount > 0 && weekCount > 0 && (
               <div className="card">
                 <div className="card-title">Bye Week Assignments</div>
                 <div className="card-subtitle">
@@ -430,12 +430,14 @@ export default function Schedule({
                     </div>
                     <div className="stat-label">Foursome Range</div>
                   </div>
-                  <div className="stat-chip">
-                    <div className="stat-value">
-                      {stats.byeMin}-{stats.byeMax}
+                  {(stats.byeMin > 0 || stats.byeMax > 0) && (
+                    <div className="stat-chip">
+                      <div className="stat-value">
+                        {stats.byeMin}-{stats.byeMax}
+                      </div>
+                      <div className="stat-label">Byes/Player</div>
                     </div>
-                    <div className="stat-label">Byes/Player</div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
