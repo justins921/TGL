@@ -233,6 +233,163 @@ function generateRoundRobin(
   return { weeks, foursomeCount, matchupCount, byeCount };
 }
 
+// ── Round-Robin for Even Player Counts ──
+// For n players where n ≡ 0 (mod 4) and numWeeks = n-1:
+// Classic polygon method: fix player 0, rotate 1..n-1.
+// n-1 rounds, n/2 matches per round, no byes.
+// Guarantees every pair plays exactly once.
+
+function generateRoundRobinEven(
+  numPlayers: number,
+  _numWeeks: number,
+  _assignedByes: Record<number, number[]>
+): ScheduleResult {
+  const n = numPlayers;
+  const numRounds = n - 1;
+  const halfN = n / 2;
+
+  // Step 1: Generate round-robin rounds using polygon method for even n.
+  // Fix player 0. Players 1..n-1 rotate around positions.
+  // Round r: position i holds player ((i - 1 + r) % (n-1)) + 1 for i=1..n-1
+  // Matches: player at position 0 (fixed: player 0) vs position n-1,
+  //          position 1 vs position n-2, etc.
+  const rrRounds: { matches: Match[] }[] = [];
+
+  for (let r = 0; r < numRounds; r++) {
+    const pos: number[] = new Array(n);
+    pos[0] = 0;
+    for (let i = 1; i < n; i++) {
+      pos[i] = ((i - 1 + r) % (n - 1)) + 1;
+    }
+
+    const matches: Match[] = [];
+    for (let k = 0; k < halfN; k++) {
+      matches.push([pos[k], pos[n - 1 - k]]);
+    }
+    rrRounds.push({ matches });
+  }
+
+  // Step 2: Shuffle round order for variety between runs
+  const roundOrder: number[] = Array.from({ length: numRounds }, (_, i) => i);
+  for (let i = roundOrder.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [roundOrder[i], roundOrder[j]] = [roundOrder[j], roundOrder[i]];
+  }
+
+  // Step 3: Greedy foursome grouping (same approach as odd round-robin)
+  const foursomeCount: Record<string, number> = {};
+  const byeCount = new Array(n).fill(0); // all zeros - no byes
+
+  const allGroupings: FoursomeGroup[][][] = [];
+  for (let w = 0; w < numRounds; w++) {
+    const round = rrRounds[roundOrder[w]];
+    allGroupings.push(enumerateGroupings(round.matches));
+  }
+
+  function scoreGrouping(grouping: FoursomeGroup[]): number {
+    let primary = 0;
+    let secondary = 0;
+    for (const [m1, m2] of grouping) {
+      const members = [m1[0], m1[1], m2[0], m2[1]];
+      for (let i = 0; i < 4; i++) {
+        for (let j = i + 1; j < 4; j++) {
+          const c = (foursomeCount[pairKey(members[i], members[j])] || 0) + 1;
+          primary += outlierPenalty(c);
+          secondary += c * c;
+        }
+      }
+    }
+    return primary * 10000 + secondary;
+  }
+
+  function applyGrouping(grouping: FoursomeGroup[], delta: number): void {
+    for (const [m1, m2] of grouping) {
+      const members = [m1[0], m1[1], m2[0], m2[1]];
+      for (let i = 0; i < 4; i++) {
+        for (let j = i + 1; j < 4; j++) {
+          const key = pairKey(members[i], members[j]);
+          foursomeCount[key] = (foursomeCount[key] || 0) + delta;
+        }
+      }
+    }
+  }
+
+  // Initial greedy pass
+  const currentGrouping: FoursomeGroup[][] = [];
+
+  for (let w = 0; w < numRounds; w++) {
+    const groupings = allGroupings[w];
+    let bestGrouping = groupings[0];
+    let bestScore = Infinity;
+
+    for (const grouping of groupings) {
+      const score = scoreGrouping(grouping);
+      if (score < bestScore) {
+        bestScore = score;
+        bestGrouping = grouping;
+      }
+    }
+
+    currentGrouping.push(bestGrouping);
+    applyGrouping(bestGrouping, +1);
+  }
+
+  // Step 4: Global repair
+  for (let pass = 0; pass < 20; pass++) {
+    let improved = false;
+
+    for (let w = 0; w < numRounds; w++) {
+      applyGrouping(currentGrouping[w], -1);
+
+      const groupings = allGroupings[w];
+      let bestGrouping = currentGrouping[w];
+      let bestScore = Infinity;
+
+      for (const grouping of groupings) {
+        const score = scoreGrouping(grouping);
+        if (score < bestScore) {
+          bestScore = score;
+          bestGrouping = grouping;
+        }
+      }
+
+      if (bestGrouping !== currentGrouping[w]) {
+        improved = true;
+        currentGrouping[w] = bestGrouping;
+      }
+
+      applyGrouping(currentGrouping[w], +1);
+    }
+
+    if (!improved) break;
+  }
+
+  // Step 5: Build final week data
+  const matchupCount: Record<string, number> = {};
+  const weeks: WeekData[] = [];
+
+  for (let w = 0; w < numRounds; w++) {
+    const round = rrRounds[roundOrder[w]];
+    const weekData: WeekData = { foursomes: [], byePlayers: [] };
+
+    for (const [m1, m2] of currentGrouping[w]) {
+      const players = [m1[0], m1[1], m2[0], m2[1]];
+      const matchups: [number, number][] = [m1, m2];
+
+      for (const [a, b] of matchups) {
+        const key = pairKey(a, b);
+        matchupCount[key] = (matchupCount[key] || 0) + 1;
+      }
+
+      weekData.foursomes.push({ players, matchups });
+    }
+
+    weeks.push(weekData);
+  }
+
+  return { weeks, foursomeCount, matchupCount, byeCount };
+}
+
 // ── Heuristic Approach (fallback for non-standard configurations) ──
 
 function generateHeuristic(
@@ -476,10 +633,15 @@ function generateOneSchedule(
   assignedByes: Record<number, number[]>
 ): ScheduleResult {
   // Use round-robin for perfect 1v1 when conditions allow:
-  // - n ≡ 1 (mod 4) ensures (n-1) active players form exact foursomes
+  // - n ≡ 1 (mod 4) ensures (n-1) active players form exact foursomes with 1 bye
   // - numWeeks === numPlayers ensures exactly 1 bye per player
   if (numPlayers >= 5 && numPlayers % 4 === 1 && numWeeks === numPlayers) {
     return generateRoundRobin(numPlayers, numWeeks, assignedByes);
+  }
+  // - n ≡ 0 (mod 4) ensures all players form exact foursomes with no byes
+  // - numWeeks === numPlayers - 1 ensures every pair plays exactly once
+  if (numPlayers >= 8 && numPlayers % 4 === 0 && numWeeks === numPlayers - 1) {
+    return generateRoundRobinEven(numPlayers, numWeeks, assignedByes);
   }
   return generateHeuristic(numPlayers, numWeeks, assignedByes);
 }

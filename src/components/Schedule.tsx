@@ -47,7 +47,7 @@ export default function Schedule({
   playerProfiles,
 }: Props) {
   const [numPlayers, setNumPlayers] = useState(String(DEFAULT_PLAYERS.length));
-  const [numWeeks, setNumWeeks] = useState(String(DEFAULT_PLAYERS.length));
+  const [numWeeks, setNumWeeks] = useState(String(DEFAULT_PLAYERS.length % 4 === 0 ? DEFAULT_PLAYERS.length - 1 : DEFAULT_PLAYERS.length));
   const [playerNames, setPlayerNames] = useState<string[]>([...DEFAULT_PLAYERS]);
   const [byeAssignments, setByeAssignments] = useState<Record<number, string>>({});
   const [subNames, setSubNames] = useState<string[]>([...DEFAULT_SUBS]);
