@@ -242,7 +242,8 @@ function generateRoundRobin(
 function generateRoundRobinEven(
   numPlayers: number,
   _numWeeks: number,
-  _assignedByes: Record<number, number[]>
+  _assignedByes: Record<number, number[]>,
+  balancePlayerIdx: number = -1
 ): ScheduleResult {
   const n = numPlayers;
   const numRounds = n - 1;
@@ -276,14 +277,115 @@ function generateRoundRobinEven(
     [roundOrder[i], roundOrder[j]] = [roundOrder[j], roundOrder[i]];
   }
 
-  // Step 3: Greedy foursome grouping (same approach as odd round-robin)
+  // Step 3: Determine Justin's foursome partner matches via backtracking
+  // then optimize remaining foursomes with greedy + repair.
+  const bp = balancePlayerIdx;
   const foursomeCount: Record<string, number> = {};
   const byeCount = new Array(n).fill(0); // all zeros - no byes
 
-  const allGroupings: FoursomeGroup[][][] = [];
+  // For each week, find Justin's match index and the other matches
+  type WeekInfo = { justinMatchIdx: number; otherMatchIndices: number[] };
+  const weekInfos: WeekInfo[] = [];
+
   for (let w = 0; w < numRounds; w++) {
     const round = rrRounds[roundOrder[w]];
-    allGroupings.push(enumerateGroupings(round.matches));
+    let justinMatchIdx = -1;
+    const otherMatchIndices: number[] = [];
+    for (let m = 0; m < round.matches.length; m++) {
+      const [a, b] = round.matches[m];
+      if (a === bp || b === bp) {
+        justinMatchIdx = m;
+      } else {
+        otherMatchIndices.push(m);
+      }
+    }
+    weekInfos.push({ justinMatchIdx, otherMatchIndices });
+  }
+
+  // Backtracking: pick one partner match per week such that each non-bp player
+  // appears in partner matches exactly 2 times.
+  // partnerChoice[w] = index into otherMatchIndices for week w
+  const partnerChoice: number[] = new Array(numRounds).fill(-1);
+  const partnerCount = new Array(n).fill(0); // how many times each player appears as Justin's partner via paired match
+
+  function backtrack(w: number): boolean {
+    if (w === numRounds) {
+      // Verify all counts are exactly 2
+      for (let p = 0; p < n; p++) {
+        if (p === bp) continue;
+        if (partnerCount[p] !== 2) return false;
+      }
+      return true;
+    }
+
+    const round = rrRounds[roundOrder[w]];
+    const info = weekInfos[w];
+    const remaining = numRounds - w;
+
+    // Try each candidate match as Justin's foursome partner
+    for (let ci = 0; ci < info.otherMatchIndices.length; ci++) {
+      const mi = info.otherMatchIndices[ci];
+      const [a, b] = round.matches[mi];
+
+      // Prune: would this exceed the target of 2?
+      if (partnerCount[a] >= 2 || partnerCount[b] >= 2) continue;
+
+      // Prune: can remaining weeks still fill unmet players?
+      partnerCount[a]++;
+      partnerCount[b]++;
+
+      let feasible = true;
+      let slotsNeeded = 0;
+      for (let p = 0; p < n; p++) {
+        if (p === bp) continue;
+        const deficit = 2 - partnerCount[p];
+        if (deficit < 0) { feasible = false; break; }
+        slotsNeeded += deficit;
+      }
+      // Each remaining week (after this one) fills 2 slots
+      if (feasible && slotsNeeded <= (remaining - 1) * 2) {
+        partnerChoice[w] = ci;
+        if (backtrack(w + 1)) return true;
+      }
+
+      partnerCount[a]--;
+      partnerCount[b]--;
+    }
+
+    return false;
+  }
+
+  let balanceSolved = false;
+  if (bp >= 0) {
+    balanceSolved = backtrack(0);
+  }
+
+  // Step 3b: Build groupings using partner choices (if solved) or enumerate all
+  // For each week, enumerate groupings but constrain Justin's foursome if solved.
+  const allGroupings: FoursomeGroup[][][] = [];
+
+  for (let w = 0; w < numRounds; w++) {
+    const round = rrRounds[roundOrder[w]];
+
+    if (balanceSolved && bp >= 0) {
+      const info = weekInfos[w];
+      const partnerMatchIdx = info.otherMatchIndices[partnerChoice[w]];
+      // Justin's foursome is fixed: his match + partner match
+      const justinFoursome: FoursomeGroup = [
+        round.matches[info.justinMatchIdx],
+        round.matches[partnerMatchIdx],
+      ];
+      // Remaining matches form other foursomes
+      const remainingMatches = round.matches.filter(
+        (_, i) => i !== info.justinMatchIdx && i !== partnerMatchIdx
+      );
+      const subGroupings = enumerateGroupings(remainingMatches);
+      // Each full grouping = Justin's foursome + one sub-grouping
+      const fullGroupings: FoursomeGroup[][] = subGroupings.map((sg) => [justinFoursome, ...sg]);
+      allGroupings.push(fullGroupings);
+    } else {
+      allGroupings.push(enumerateGroupings(round.matches));
+    }
   }
 
   function scoreGrouping(grouping: FoursomeGroup[]): number {
@@ -334,7 +436,7 @@ function generateRoundRobinEven(
     applyGrouping(bestGrouping, +1);
   }
 
-  // Step 4: Global repair
+  // Step 4: Global repair - optimize remaining foursomes
   for (let pass = 0; pass < 20; pass++) {
     let improved = false;
 
@@ -629,7 +731,8 @@ function generateHeuristic(
 function generateOneSchedule(
   numPlayers: number,
   numWeeks: number,
-  assignedByes: Record<number, number[]>
+  assignedByes: Record<number, number[]>,
+  balancePlayerIdx: number = -1
 ): ScheduleResult {
   // Use round-robin for perfect 1v1 when conditions allow:
   // - n ≡ 1 (mod 4) ensures (n-1) active players form exact foursomes with 1 bye
@@ -640,7 +743,7 @@ function generateOneSchedule(
   // - n ≡ 0 (mod 4) ensures all players form exact foursomes with no byes
   // - numWeeks === numPlayers - 1 ensures every pair plays exactly once
   if (numPlayers >= 8 && numPlayers % 4 === 0 && numWeeks === numPlayers - 1) {
-    return generateRoundRobinEven(numPlayers, numWeeks, assignedByes);
+    return generateRoundRobinEven(numPlayers, numWeeks, assignedByes, balancePlayerIdx);
   }
   return generateHeuristic(numPlayers, numWeeks, assignedByes);
 }
@@ -659,16 +762,20 @@ export function generateSchedule(
     throw new Error('You need at least 4 players.');
   }
 
+  // Find balance player (plays with everyone exactly 3 times in foursomes)
+  const balancePlayerIdx = players.findIndex((p) => p === 'Justin S');
+
   let bestResult: ScheduleResult | null = null;
   let bestOverallScore = Infinity;
-  const fullRuns = 10;
+  const fullRuns = balancePlayerIdx >= 0 ? 30 : 10;
 
   for (let run = 0; run < fullRuns; run++) {
-    const result = generateOneSchedule(numPlayers, numWeeks, assignedByes);
+    const result = generateOneSchedule(numPlayers, numWeeks, assignedByes, balancePlayerIdx);
 
     let matchupRepeats = 0;
     let unplayedPairs = 0;
     let foursomeOutliers = 0;
+    let balanceDeviation = 0;
     for (let i = 0; i < numPlayers; i++) {
       for (let j = i + 1; j < numPlayers; j++) {
         const mc = result.matchupCount[pairKey(i, j)] || 0;
@@ -676,12 +783,16 @@ export function generateSchedule(
         if (mc === 0) unplayedPairs++;
         const fc = result.foursomeCount[pairKey(i, j)] || 0;
         if (fc < 2 || fc > 4) foursomeOutliers++;
+        if (balancePlayerIdx >= 0 && (i === balancePlayerIdx || j === balancePlayerIdx)) {
+          if (fc !== 3) balanceDeviation++;
+        }
       }
     }
     const score =
       matchupRepeats * 100000 +
       unplayedPairs * 10000 +
-      foursomeOutliers * 100;
+      foursomeOutliers * 100 +
+      balanceDeviation * 50;
 
     if (score < bestOverallScore) {
       bestOverallScore = score;
