@@ -5,8 +5,10 @@ import type { ScheduleData, SavedSchedule } from '../lib/types';
 const DEFAULT_PLAYERS = [
   'Bryon A', 'Buddha', 'David L', 'Jeff B', 'John M', 'Justin S',
   'Mark L', 'Mike S', 'Rudy', 'Terry S', 'Tim B', 'Tim M',
-  'Tom K', 'Lee N', 'Kevin F', 'Joe D', 'Phil P',
+  'Tom K', 'Kevin F', 'Joe D', 'Phil P',
 ];
+
+const DEFAULT_SUBS = ['Lee N'];
 
 interface Props {
   scheduleData: ScheduleData | null;
@@ -27,11 +29,11 @@ export default function Schedule({
   onNewSchedule,
   isAdmin,
 }: Props) {
-  const [numPlayers, setNumPlayers] = useState('17');
-  const [numWeeks, setNumWeeks] = useState('17');
+  const [numPlayers, setNumPlayers] = useState('16');
+  const [numWeeks, setNumWeeks] = useState('16');
   const [playerNames, setPlayerNames] = useState<string[]>([...DEFAULT_PLAYERS]);
   const [byeAssignments, setByeAssignments] = useState<Record<number, string>>({});
-  const [subNames, setSubNames] = useState<string[]>([]);
+  const [subNames, setSubNames] = useState<string[]>([...DEFAULT_SUBS]);
   const [newSubName, setNewSubName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSetup, setShowSetup] = useState(!scheduleData);
