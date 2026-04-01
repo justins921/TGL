@@ -369,7 +369,6 @@ function generateRoundRobinEven(
   const weeks: WeekData[] = [];
 
   for (let w = 0; w < numRounds; w++) {
-    const round = rrRounds[roundOrder[w]];
     const weekData: WeekData = { foursomes: [], byePlayers: [] };
 
     for (const [m1, m2] of currentGrouping[w]) {
