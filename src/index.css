@@ -2262,6 +2262,20 @@ input, select {
   .nav-admin-btn {
     display: none; /* show in menu instead */
   }
+  .form-row {
+    flex-wrap: wrap;
+  }
+  .form-row .form-group {
+    min-width: 120px;
+  }
+  .page-content {
+    padding: 12px;
+  }
+  .week-title-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
 }
 
 /* Phone */
