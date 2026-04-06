@@ -56,6 +56,7 @@ export default function Schedule({
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSetup, setShowSetup] = useState(!scheduleData);
   const [swapSource, setSwapSource] = useState<number | null>(null);
+  const [foursomeSwap, setFoursomeSwap] = useState<{ week: number; foursome: number } | null>(null);
 
   const playerCount = parseInt(numPlayers) || 0;
   const weekCount = parseInt(numWeeks) || 0;
@@ -155,6 +156,31 @@ export default function Schedule({
       setSwapSource(null);
     },
     [swapSource, scheduleData, setScheduleData]
+  );
+
+  const handleSwapFoursome = useCallback(
+    (weekIndex: number, foursomeIndex: number) => {
+      if (foursomeSwap === null || foursomeSwap.week !== weekIndex) {
+        setFoursomeSwap({ week: weekIndex, foursome: foursomeIndex });
+        return;
+      }
+      if (foursomeSwap.foursome === foursomeIndex) {
+        setFoursomeSwap(null);
+        return;
+      }
+      if (!scheduleData) return;
+      const newWeeks = scheduleData.weeks.map((w, wi) => {
+        if (wi !== weekIndex) return w;
+        const newFoursomes = [...w.foursomes];
+        const tmp = newFoursomes[foursomeSwap.foursome];
+        newFoursomes[foursomeSwap.foursome] = newFoursomes[foursomeIndex];
+        newFoursomes[foursomeIndex] = tmp;
+        return { ...w, foursomes: newFoursomes };
+      });
+      setScheduleData({ ...scheduleData, weeks: newWeeks });
+      setFoursomeSwap(null);
+    },
+    [foursomeSwap, scheduleData, setScheduleData]
   );
 
   const handleScoreChange = useCallback(
@@ -565,9 +591,29 @@ export default function Schedule({
                   </div>
                 </div>
 
-                {week.foursomes.map((foursome, fIdx) => (
-                  <div key={fIdx} className="foursome-card">
-                    <div className="foursome-title">Foursome {fIdx + 1}</div>
+                {week.foursomes.map((foursome, fIdx) => {
+                  const isFSwapSource = foursomeSwap?.week === weekIndex && foursomeSwap?.foursome === fIdx;
+                  const isFSwapTarget = isAdmin && foursomeSwap !== null && foursomeSwap.week === weekIndex && foursomeSwap.foursome !== fIdx;
+                  return (
+                  <div
+                    key={fIdx}
+                    className={`foursome-card${isFSwapSource ? ' fswap-selected' : ''}${isFSwapTarget ? ' fswap-target' : ''}`}
+                    onClick={isFSwapTarget ? (e) => { e.stopPropagation(); handleSwapFoursome(weekIndex, fIdx); } : undefined}
+                  >
+                    <div className="foursome-header">
+                      <div className="foursome-title">Foursome {fIdx + 1}</div>
+                      {isAdmin && (
+                        <button
+                          className={`fswap-btn${isFSwapSource ? ' active' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSwapFoursome(weekIndex, fIdx);
+                          }}
+                        >
+                          {isFSwapSource ? '✕' : '⇅'}
+                        </button>
+                      )}
+                    </div>
                     {foursome.matchups.map(([a, b], mIdx) => {
                       const subs = scheduleData.substitutions || {};
                       const subA = subs[`${weekIndex}-${a}`];
@@ -633,7 +679,8 @@ export default function Schedule({
                       );
                     })}
                   </div>
-                ))}
+                  );
+                })}
               </div>
               );
             })}
