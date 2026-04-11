@@ -485,6 +485,12 @@ function generateRoundRobinEven(
       weekData.foursomes.push({ players, matchups });
     }
 
+    // Shuffle foursome order so no player is always in the same slot
+    for (let i = weekData.foursomes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [weekData.foursomes[i], weekData.foursomes[j]] = [weekData.foursomes[j], weekData.foursomes[i]];
+    }
+
     weeks.push(weekData);
   }
 
