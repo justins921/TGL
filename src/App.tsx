@@ -3,6 +3,19 @@ import { buildDefaultProfiles } from './lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from './lib/types';
 import { loadSchedules, saveSchedule, deleteSchedule, loadPlayers, savePlayer, deletePlayer } from './lib/storage';
 import { AuthProvider, useAuth } from './lib/auth';
+
+// One-time migration: swap Tom K (injured) ↔ Lee N (returning) in schedule data
+function migrateScheduleData(data: ScheduleData): ScheduleData {
+  const tomIdx = data.players.indexOf('Tom K');
+  const leeSubIdx = data.subs.indexOf('Lee N');
+  if (tomIdx === -1 || leeSubIdx === -1) return data; // already migrated or different roster
+
+  const newPlayers = [...data.players];
+  newPlayers[tomIdx] = 'Lee N';
+  const newSubs = [...data.subs];
+  newSubs[leeSubIdx] = 'Tom K';
+  return { ...data, players: newPlayers, subs: newSubs };
+}
 import Schedule from './components/Schedule';
 import Analytics from './components/Analytics';
 import Compare from './components/Compare';
@@ -35,9 +48,10 @@ function AppContent() {
   // Load saved schedules and players on mount
   useEffect(() => {
     loadSchedules().then((schedules) => {
-      setSavedSchedules(schedules);
-      if (schedules.length > 0 && !scheduleData) {
-        setScheduleData(schedules[0].data);
+      const migrated = schedules.map((s) => ({ ...s, data: migrateScheduleData(s.data) }));
+      setSavedSchedules(migrated);
+      if (migrated.length > 0 && !scheduleData) {
+        setScheduleData(migrated[0].data);
       }
     });
     loadPlayers().then((loaded) => {
