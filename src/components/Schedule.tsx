@@ -252,6 +252,26 @@ export default function Schedule({
 
   const stats = scheduleData ? computeStats(scheduleData) : null;
 
+  // Current week = first week where not all matches have scores entered
+  const currentWeekIndex = (() => {
+    if (!scheduleData) return 0;
+    const scores = scheduleData.scores || {};
+    const subs = scheduleData.substitutions || {};
+    for (let w = 0; w < scheduleData.weeks.length; w++) {
+      const week = scheduleData.weeks[w];
+      const allScored = week.foursomes.every((f) =>
+        f.matchups.every(([a, b]) => {
+          if (subs[`${w}-${a}`] === 'Casper' || subs[`${w}-${b}`] === 'Casper') return true;
+          return Array.from({ length: HOLE_COUNT }, (_, h) =>
+            scores[`${w}-${a}-${h}`] !== undefined && scores[`${w}-${b}-${h}`] !== undefined
+          ).every(Boolean);
+        })
+      );
+      if (!allScored) return w;
+    }
+    return scheduleData.weeks.length - 1;
+  })();
+
   // Public viewers: if no schedule data, show a welcome message
   if (!isAdmin && !scheduleData) {
     return (
@@ -672,12 +692,16 @@ export default function Schedule({
                             <div className="match-players">
                               <span className="player-name">
                                 {scheduleData.players[a]}
-                                <span className="player-hcp">({getHandicap(scheduleData.players[a], weekIndex)})</span>
+                                {weekIndex === currentWeekIndex && (
+                                  <span className="player-hcp">({getHandicap(scheduleData.players[a], weekIndex)})</span>
+                                )}
                               </span>
                               <span className="vs-badge">VS</span>
                               <span className="player-name">
                                 {scheduleData.players[b]}
-                                <span className="player-hcp">({getHandicap(scheduleData.players[b], weekIndex)})</span>
+                                {weekIndex === currentWeekIndex && (
+                                  <span className="player-hcp">({getHandicap(scheduleData.players[b], weekIndex)})</span>
+                                )}
                               </span>
                             </div>
                           )}
