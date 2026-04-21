@@ -670,9 +670,15 @@ export default function Schedule({
                             />
                           ) : (
                             <div className="match-players">
-                              <span className="player-name">{scheduleData.players[a]}</span>
+                              <span className="player-name">
+                                {scheduleData.players[a]}
+                                <span className="player-hcp">({getHandicap(scheduleData.players[a], weekIndex)})</span>
+                              </span>
                               <span className="vs-badge">VS</span>
-                              <span className="player-name">{scheduleData.players[b]}</span>
+                              <span className="player-name">
+                                {scheduleData.players[b]}
+                                <span className="player-hcp">({getHandicap(scheduleData.players[b], weekIndex)})</span>
+                              </span>
                             </div>
                           )}
                         </div>

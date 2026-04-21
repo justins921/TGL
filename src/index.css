@@ -884,6 +884,13 @@ input, select {
   color: var(--text);
 }
 
+.player-hcp {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
 .vs-badge {
   background: var(--green-900);
   color: #fff;
