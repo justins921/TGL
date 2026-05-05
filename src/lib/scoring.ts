@@ -125,10 +125,10 @@ export interface MatchResult {
 
 /**
  * Casper scoring: when a real player faces a no-show,
- * they receive 6 + (40 + handicap - gross) * 0.5 total points.
+ * they receive up to 4 points maximum.
  */
-function casperPoints(handicap: number, totalGross: number): number {
-  return 6 + (40 + handicap - totalGross) * 0.5;
+function casperPoints(): number {
+  return 4;
 }
 
 /**
@@ -165,17 +165,9 @@ export function calculateMatchResult(
     };
   }
 
-  // One Casper → real player gets casper points, Casper gets 0
+  // One Casper → real player gets flat 4 points, Casper gets 0
   if (casperA || casperB) {
-    const realGross = casperA ? grossB : grossA;
-    const realHcp = casperA ? handicapB : handicapA;
-
-    // Need the real player's scores to calculate
-    const totalGross = realGross.reduce<number>((s, v) => s + (v ?? 0), 0);
-    const allFilled = realGross.every((v) => v !== undefined);
-    if (!allFilled) return null;
-
-    const realTotal = casperPoints(realHcp, totalGross);
+    const realTotal = casperPoints();
     return {
       holePointsA: new Array(HOLE_COUNT).fill(0),
       holePointsB: new Array(HOLE_COUNT).fill(0),

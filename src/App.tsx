@@ -77,18 +77,14 @@ function AppContent() {
     setJustSaved(true);
   }, [scheduleData, saveName, savedSchedules.length]);
 
-  // Auto-save schedule changes (scores, subs, dates, foursome swaps)
-  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
+  const handleQuickSave = useCallback(async () => {
     if (!scheduleData || !activeScheduleId) return;
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = setTimeout(() => {
-      updateSchedule(activeScheduleId, scheduleData);
-      setSavedSchedules((prev) =>
-        prev.map((s) => s.id === activeScheduleId ? { ...s, data: scheduleData, stats: computeStats(scheduleData) } : s)
-      );
-    }, 1000);
-    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+    await updateSchedule(activeScheduleId, scheduleData);
+    setSavedSchedules((prev) =>
+      prev.map((s) => s.id === activeScheduleId ? { ...s, data: scheduleData, stats: computeStats(scheduleData) } : s)
+    );
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2000);
   }, [scheduleData, activeScheduleId]);
 
   const handleDelete = useCallback(async (id: string) => {
@@ -207,12 +203,12 @@ function AppContent() {
           {justSaved ? (
             <div className="save-strip-success">
               <span className="save-check">&#10003;</span>
-              <span>Schedule saved!</span>
-              <button
-                className="save-another-btn"
-                onClick={() => setJustSaved(false)}
-              >
-                Save Another Copy
+              <span>Saved!</span>
+            </div>
+          ) : activeScheduleId ? (
+            <div className="save-strip-row">
+              <button className="save-strip-btn" onClick={handleQuickSave}>
+                Save
               </button>
             </div>
           ) : (
