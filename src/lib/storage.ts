@@ -134,6 +134,28 @@ export async function saveSchedule(
   return saved;
 }
 
+export async function updateSchedule(id: string, scheduleData: ScheduleData): Promise<void> {
+  const stats = computeStats(scheduleData);
+
+  if (!sql) {
+    const current = localLoad();
+    localSave(current.map((s) =>
+      s.id === id ? { ...s, data: scheduleData, stats } : s
+    ));
+    return;
+  }
+
+  try {
+    await sql`UPDATE schedules SET data = ${JSON.stringify(scheduleData)}, stats = ${JSON.stringify(stats)} WHERE id = ${id}`;
+  } catch (e) {
+    console.warn('Database update failed, falling back to localStorage:', e);
+    const current = localLoad();
+    localSave(current.map((s) =>
+      s.id === id ? { ...s, data: scheduleData, stats } : s
+    ));
+  }
+}
+
 export async function deleteSchedule(id: string): Promise<void> {
   if (!sql) {
     const current = localLoad();

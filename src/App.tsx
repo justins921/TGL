@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { buildDefaultProfiles } from './lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from './lib/types';
-import { loadSchedules, saveSchedule, deleteSchedule, loadPlayers, savePlayer, deletePlayer } from './lib/storage';
+import { loadSchedules, saveSchedule, updateSchedule, deleteSchedule, loadPlayers, savePlayer, deletePlayer } from './lib/storage';
+import { computeStats } from './lib/scheduleEngine';
 import { AuthProvider, useAuth } from './lib/auth';
 
 // One-time migration: swap Tom K (injured) ↔ Lee N (returning) in schedule data
@@ -44,6 +45,7 @@ function AppContent() {
   const [saveName, setSaveName] = useState('');
   const [justSaved, setJustSaved] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [activeScheduleId, setActiveScheduleId] = useState<string | null>(null);
 
   // Load saved schedules and players on mount
   useEffect(() => {
@@ -52,6 +54,7 @@ function AppContent() {
       setSavedSchedules(migrated);
       if (migrated.length > 0 && !scheduleData) {
         setScheduleData(migrated[0].data);
+        setActiveScheduleId(migrated[0].id);
       }
     });
     loadPlayers().then((loaded) => {
@@ -69,9 +72,24 @@ function AppContent() {
     if (!scheduleData) return;
     const saved = await saveSchedule(scheduleData, saveName, savedSchedules.length);
     setSavedSchedules((prev) => [saved, ...prev]);
+    setActiveScheduleId(saved.id);
     setSaveName('');
     setJustSaved(true);
   }, [scheduleData, saveName, savedSchedules.length]);
+
+  // Auto-save schedule changes (scores, subs, dates, foursome swaps)
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!scheduleData || !activeScheduleId) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      updateSchedule(activeScheduleId, scheduleData);
+      setSavedSchedules((prev) =>
+        prev.map((s) => s.id === activeScheduleId ? { ...s, data: scheduleData, stats: computeStats(scheduleData) } : s)
+      );
+    }, 1000);
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+  }, [scheduleData, activeScheduleId]);
 
   const handleDelete = useCallback(async (id: string) => {
     await deleteSchedule(id);
@@ -80,6 +98,7 @@ function AppContent() {
 
   const handleLoad = useCallback((saved: SavedSchedule) => {
     setScheduleData(saved.data);
+    setActiveScheduleId(saved.id);
     setActiveTab('schedule');
     setJustSaved(false);
   }, []);
