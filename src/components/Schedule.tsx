@@ -32,6 +32,7 @@ interface Props {
   onDelete: (id: string) => void;
   onLoad: (saved: SavedSchedule) => void;
   onNewSchedule: () => void;
+  onSave: () => void;
   isAdmin: boolean;
   playerProfiles: PlayerProfile[];
 }
@@ -43,6 +44,7 @@ export default function Schedule({
   onDelete,
   onLoad,
   onNewSchedule,
+  onSave,
   isAdmin,
   playerProfiles,
 }: Props) {
@@ -57,6 +59,14 @@ export default function Schedule({
   const [showSetup, setShowSetup] = useState(!scheduleData);
   const [swapSource, setSwapSource] = useState<number | null>(null);
   const [foursomeSwap, setFoursomeSwap] = useState<{ week: number; foursome: number } | null>(null);
+  const [savedFoursome, setSavedFoursome] = useState<string | null>(null);
+
+  const handleFoursomeSave = useCallback((weekIndex: number, fIdx: number) => {
+    onSave();
+    const key = `${weekIndex}-${fIdx}`;
+    setSavedFoursome(key);
+    setTimeout(() => setSavedFoursome((prev) => prev === key ? null : prev), 2000);
+  }, [onSave]);
 
   const playerCount = parseInt(numPlayers) || 0;
   const weekCount = parseInt(numWeeks) || 0;
@@ -708,6 +718,14 @@ export default function Schedule({
                         </div>
                       );
                     })}
+                    {isAdmin && (
+                      <button
+                        className={`foursome-save-btn${savedFoursome === `${weekIndex}-${fIdx}` ? ' saved' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); handleFoursomeSave(weekIndex, fIdx); }}
+                      >
+                        {savedFoursome === `${weekIndex}-${fIdx}` ? '✓ Saved' : 'Save'}
+                      </button>
+                    )}
                   </div>
                   );
                 })}

@@ -236,6 +236,7 @@ function AppContent() {
           onDelete={handleDelete}
           onLoad={handleLoad}
           onNewSchedule={handleNewSchedule}
+          onSave={handleQuickSave}
           isAdmin={isAdmin}
           playerProfiles={players}
         />
