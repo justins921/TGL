@@ -563,7 +563,14 @@ export default function Schedule({
                 Tap another week to swap with Week {swapSource + 1}, or tap it again to cancel
               </div>
             )}
-            {scheduleData?.weeks.map((week, weekIndex) => {
+            {scheduleData?.weeks.map((week, weekIndex) => ({ week, weekIndex }))
+              .sort((a, b) => {
+                const aComplete = a.weekIndex < currentWeekIndex ? 1 : 0;
+                const bComplete = b.weekIndex < currentWeekIndex ? 1 : 0;
+                if (aComplete !== bComplete) return aComplete - bComplete;
+                return a.weekIndex - b.weekIndex;
+              })
+              .map(({ week, weekIndex }) => {
               const isSwapSource = swapSource === weekIndex;
               const isSwapTarget = isAdmin && swapSource !== null && swapSource !== weekIndex;
               return (
