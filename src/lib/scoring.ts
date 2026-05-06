@@ -124,11 +124,11 @@ export interface MatchResult {
 }
 
 /**
- * Casper scoring: when a real player faces a no-show,
- * they receive up to 4 points maximum.
+ * Casper scoring: real player's points from formula,
+ * absent player gets min(4, 10 - realPoints).
  */
-function casperPoints(): number {
-  return 4;
+function casperPoints(handicap: number, totalGross: number): number {
+  return 6 + (40 + handicap - totalGross) * 0.5;
 }
 
 /**
@@ -165,16 +165,25 @@ export function calculateMatchResult(
     };
   }
 
-  // One Casper → real player gets flat 4 points, Casper gets 0
+  // One Casper → real player enters scores, absent player caps at 4
   if (casperA || casperB) {
-    const realTotal = casperPoints();
+    const realGross = casperA ? grossB : grossA;
+    const realHcp = casperA ? handicapB : handicapA;
+
+    const allFilled = realGross.every((v) => v !== undefined);
+    if (!allFilled) return null;
+
+    const totalGross = realGross.reduce<number>((s, v) => s + (v ?? 0), 0);
+    const realPoints = casperPoints(realHcp, totalGross);
+    const casperPts = Math.min(4, 10 - realPoints);
+
     return {
       holePointsA: new Array(HOLE_COUNT).fill(0),
       holePointsB: new Array(HOLE_COUNT).fill(0),
-      totalPointA: casperA ? 0 : realTotal,
-      totalPointB: casperB ? 0 : realTotal,
-      totalPointsA: casperA ? 0 : realTotal,
-      totalPointsB: casperB ? 0 : realTotal,
+      totalPointA: casperA ? Math.max(0, casperPts) : realPoints,
+      totalPointB: casperB ? Math.max(0, casperPts) : realPoints,
+      totalPointsA: casperA ? Math.max(0, casperPts) : realPoints,
+      totalPointsB: casperB ? Math.max(0, casperPts) : realPoints,
       netScoresA: new Array(HOLE_COUNT).fill(0),
       netScoresB: new Array(HOLE_COUNT).fill(0),
       strokesGivenA: emptyStrokes,
