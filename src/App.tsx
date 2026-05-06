@@ -5,16 +5,16 @@ import { loadSchedules, saveSchedule, updateSchedule, deleteSchedule, loadPlayer
 import { computeStats } from './lib/scheduleEngine';
 import { AuthProvider, useAuth } from './lib/auth';
 
-// One-time migration: swap Tom K (injured) ↔ Lee N (returning) in schedule data
+// One-time migration: ensure Tom K is in roster and Lee N is a sub
 function migrateScheduleData(data: ScheduleData): ScheduleData {
-  const tomIdx = data.players.indexOf('Tom K');
-  const leeSubIdx = data.subs.indexOf('Lee N');
-  if (tomIdx === -1 || leeSubIdx === -1) return data; // already migrated or different roster
+  const leeIdx = data.players.indexOf('Lee N');
+  const tomSubIdx = data.subs.indexOf('Tom K');
+  if (leeIdx === -1 || tomSubIdx === -1) return data;
 
   const newPlayers = [...data.players];
-  newPlayers[tomIdx] = 'Lee N';
+  newPlayers[leeIdx] = 'Tom K';
   const newSubs = [...data.subs];
-  newSubs[leeSubIdx] = 'Tom K';
+  newSubs[tomSubIdx] = 'Lee N';
   return { ...data, players: newPlayers, subs: newSubs };
 }
 import Schedule from './components/Schedule';
