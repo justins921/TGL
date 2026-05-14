@@ -234,6 +234,33 @@ export default function Schedule({
     [playerProfiles, scheduleData]
   );
 
+  const getScoringAvg = useCallback(
+    (playerName: string, weekIndex: number): string | null => {
+      if (!scheduleData) return null;
+      const playerIdx = scheduleData.players.indexOf(playerName);
+      if (playerIdx === -1) return null;
+      const scores = scheduleData.scores || {};
+      const subs = scheduleData.substitutions || {};
+      const totals: number[] = [];
+      for (let w = 0; w < weekIndex && w < scheduleData.weeks.length; w++) {
+        const sub = subs[`${w}-${playerIdx}`];
+        if (sub) continue;
+        let total = 0;
+        let complete = true;
+        for (let h = 0; h < HOLE_COUNT; h++) {
+          const s = scores[`${w}-${playerIdx}-${h}`];
+          if (s === undefined) { complete = false; break; }
+          total += s;
+        }
+        if (complete) totals.push(total);
+      }
+      if (totals.length === 0) return null;
+      const avg = totals.reduce((a, b) => a + b, 0) / totals.length;
+      return avg.toFixed(1);
+    },
+    [scheduleData]
+  );
+
   const handleWeekDateChange = useCallback(
     (weekIndex: number, newDate: string) => {
       if (!scheduleData) return;
@@ -710,14 +737,24 @@ export default function Schedule({
                               <span className="player-name">
                                 {scheduleData.players[a]}
                                 {weekIndex === currentWeekIndex && (
-                                  <span className="player-hcp">({getHandicap(scheduleData.players[a], weekIndex)})</span>
+                                  <span className="player-hcp">
+                                    ({getHandicap(scheduleData.players[a], weekIndex)}
+                                    {getScoringAvg(scheduleData.players[a], weekIndex) && (
+                                      <> / {getScoringAvg(scheduleData.players[a], weekIndex)} avg</>
+                                    )})
+                                  </span>
                                 )}
                               </span>
                               <span className="vs-badge">VS</span>
                               <span className="player-name">
                                 {scheduleData.players[b]}
                                 {weekIndex === currentWeekIndex && (
-                                  <span className="player-hcp">({getHandicap(scheduleData.players[b], weekIndex)})</span>
+                                  <span className="player-hcp">
+                                    ({getHandicap(scheduleData.players[b], weekIndex)}
+                                    {getScoringAvg(scheduleData.players[b], weekIndex) && (
+                                      <> / {getScoringAvg(scheduleData.players[b], weekIndex)} avg</>
+                                    )})
+                                  </span>
                                 )}
                               </span>
                             </div>
