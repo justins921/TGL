@@ -767,8 +767,10 @@ export default function Schedule({
                     })}
                     {(() => {
                       const allScores = scheduleData.scores || {};
+                      const subs = scheduleData.substitutions || {};
                       const playerIndices = foursome.players;
-                      const holeScores: (number | undefined)[][] = playerIndices.map((pi) =>
+                      const activePlayers = playerIndices.filter((pi) => subs[`${weekIndex}-${pi}`] !== 'Casper');
+                      const holeScores: (number | undefined)[][] = activePlayers.map((pi) =>
                         Array.from({ length: HOLE_COUNT }, (_, h) => allScores[`${weekIndex}-${pi}-${h}`])
                       );
                       const anyScored = holeScores.some((ps) => ps.some((s) => s !== undefined));
