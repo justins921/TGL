@@ -684,7 +684,10 @@ export default function Schedule({
                       const subB = subs[`${weekIndex}-${b}`];
                       const subHandicapA = subA && subA !== 'Casper' ? getHandicap(subA, weekIndex) : undefined;
                       const subHandicapB = subB && subB !== 'Casper' ? getHandicap(subB, weekIndex) : undefined;
-                      const availableSubs = scheduleData.subs || [];
+                      const availableSubs = [...new Set([
+                        ...(scheduleData.subs || []),
+                        ...playerProfiles.filter((p) => p.isSub).map((p) => p.name),
+                      ])];
 
                       // Check if any scores exist for this match
                       const matchScores = scheduleData.scores || {};
