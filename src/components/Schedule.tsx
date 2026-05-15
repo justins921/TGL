@@ -765,6 +765,45 @@ export default function Schedule({
                         </div>
                       );
                     })}
+                    {(() => {
+                      const allScores = scheduleData.scores || {};
+                      const playerIndices = foursome.players;
+                      const holeScores: (number | undefined)[][] = playerIndices.map((pi) =>
+                        Array.from({ length: HOLE_COUNT }, (_, h) => allScores[`${weekIndex}-${pi}-${h}`])
+                      );
+                      const anyScored = holeScores.some((ps) => ps.some((s) => s !== undefined));
+                      if (!anyScored) return null;
+
+                      const bestTwoPerHole: { scores: number[]; total: number } = { scores: [], total: 0 };
+                      for (let h = 0; h < HOLE_COUNT; h++) {
+                        const valid = holeScores
+                          .map((ps) => ps[h])
+                          .filter((s): s is number => s !== undefined)
+                          .sort((a, b) => a - b);
+                        const best2 = valid.slice(0, 2).reduce((a, b) => a + b, 0);
+                        bestTwoPerHole.scores.push(valid.length >= 2 ? best2 : 0);
+                        bestTwoPerHole.total += valid.length >= 2 ? best2 : 0;
+                      }
+                      const allComplete = holeScores.every((ps) => ps.every((s) => s !== undefined));
+
+                      return (
+                        <div className="bestball-summary">
+                          <div className="bestball-title">Best Ball (Top 2)</div>
+                          <div className="bestball-holes">
+                            {bestTwoPerHole.scores.map((s, h) => (
+                              <div key={h} className="bestball-hole">
+                                <span className="bestball-hole-num">{h + 1}</span>
+                                <span className="bestball-hole-score">{s || '-'}</span>
+                              </div>
+                            ))}
+                            <div className="bestball-hole bestball-total">
+                              <span className="bestball-hole-num">Tot</span>
+                              <span className="bestball-hole-score">{allComplete ? bestTwoPerHole.total : '-'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     {isAdmin && (
                       <button
                         className={`foursome-save-btn${savedFoursome === `${weekIndex}-${fIdx}` ? ' saved' : ''}`}

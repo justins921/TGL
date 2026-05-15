@@ -808,6 +808,58 @@ input, select {
   margin-bottom: 0;
 }
 
+.bestball-summary {
+  margin-top: 12px;
+  padding: 10px;
+  background: var(--green-50);
+  border-radius: 8px;
+  border: 1px solid var(--green-100);
+}
+
+.bestball-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-800);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.bestball-holes {
+  display: flex;
+  gap: 2px;
+}
+
+.bestball-hole {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.bestball-hole-num {
+  display: block;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.bestball-hole-score {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.bestball-total {
+  border-left: 2px solid var(--green-300);
+  padding-left: 6px;
+  min-width: 36px;
+}
+
+.bestball-total .bestball-hole-score {
+  color: var(--green-800);
+}
+
 .foursome-save-btn {
   display: block;
   width: 100%;
