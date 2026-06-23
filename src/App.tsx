@@ -12,12 +12,37 @@ const PROFILE_AVG_FIXES: Record<string, number> = {
   'Phil P': 48.0,
 };
 
+function computeSubAverage(playerName: string, scheduleData: ScheduleData | null): number | null {
+  if (!scheduleData) return null;
+  const scores = scheduleData.scores || {};
+  const subs = scheduleData.substitutions || {};
+  const totals: number[] = [];
+
+  for (let w = 0; w < scheduleData.weeks.length; w++) {
+    for (let pi = 0; pi < scheduleData.players.length; pi++) {
+      if (subs[`${w}-${pi}`] !== playerName) continue;
+      let total = 0;
+      let complete = true;
+      for (let h = 0; h < 9; h++) {
+        const s = scores[`${w}-${pi}-${h}`];
+        if (s === undefined) { complete = false; break; }
+        total += s;
+      }
+      if (complete) totals.push(total);
+    }
+  }
+  if (totals.length === 0) return null;
+  return totals.reduce((a, b) => a + b, 0) / totals.length;
+}
+
 function migratePlayerProfiles(
   loaded: PlayerProfile[],
-  saveFn: (p: PlayerProfile) => void
+  saveFn: (p: PlayerProfile) => void,
+  scheduleData: ScheduleData | null
 ): PlayerProfile[] {
   let changed = false;
   const updated = loaded.map((p) => {
+    // Fixed averages for known players
     const correctAvg = PROFILE_AVG_FIXES[p.name];
     if (correctAvg !== undefined && p.previousSeasonAvg !== correctAvg) {
       changed = true;
@@ -28,6 +53,21 @@ function migratePlayerProfiles(
       };
       saveFn(fixed);
       return fixed;
+    }
+    // Compute average from sub appearances for subs with no previous avg
+    if (p.isSub && p.previousSeasonAvg === null) {
+      const subAvg = computeSubAverage(p.name, scheduleData);
+      if (subAvg !== null) {
+        changed = true;
+        const rounded = Math.round(subAvg * 10) / 10;
+        const fixed = {
+          ...p,
+          previousSeasonAvg: rounded,
+          handicap: calculateHandicap(rounded),
+        };
+        saveFn(fixed);
+        return fixed;
+      }
     }
     return p;
   });
@@ -76,21 +116,21 @@ function AppContent() {
 
   // Load saved schedules and players on mount
   useEffect(() => {
-    loadSchedules().then((schedules) => {
-      const migrated = schedules.map((s) => ({ ...s, data: migrateScheduleData(s.data) }));
-      setSavedSchedules(migrated);
-      if (migrated.length > 0 && !scheduleData) {
-        setScheduleData(migrated[0].data);
-        setActiveScheduleId(migrated[0].id);
+    Promise.all([loadSchedules(), loadPlayers()]).then(([schedules, loaded]) => {
+      const migratedSchedules = schedules.map((s) => ({ ...s, data: migrateScheduleData(s.data) }));
+      setSavedSchedules(migratedSchedules);
+      const activeData = migratedSchedules.length > 0 ? migratedSchedules[0].data : null;
+      if (activeData && !scheduleData) {
+        setScheduleData(activeData);
+        setActiveScheduleId(migratedSchedules[0].id);
       }
-    });
-    loadPlayers().then((loaded) => {
+
       if (loaded.length === 0) {
         const defaults = buildDefaultProfiles();
         setPlayers(defaults);
         defaults.forEach((p) => savePlayer(p));
       } else {
-        const migrated = migratePlayerProfiles(loaded, savePlayer);
+        const migrated = migratePlayerProfiles(loaded, savePlayer, activeData);
         setPlayers(migrated);
       }
     });
