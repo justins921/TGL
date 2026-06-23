@@ -339,36 +339,65 @@ export default function Players({ players, onSave, onDelete, isAdmin, scheduleDa
 function getPlayerWeeklyScores(
   playerName: string,
   scheduleData: ScheduleData | null
-): { week: number; holes: number[]; total: number; date?: string }[] {
+): { week: number; holes: number[]; total: number; date?: string; note?: string }[] {
   if (!scheduleData) return [];
-  const playerIdx = scheduleData.players.indexOf(playerName);
-  if (playerIdx === -1) return [];
-
   const scores = scheduleData.scores || {};
   const subs = scheduleData.substitutions || {};
-  const results: { week: number; holes: number[]; total: number; date?: string }[] = [];
+  const results: { week: number; holes: number[]; total: number; date?: string; note?: string }[] = [];
 
-  for (let w = 0; w < scheduleData.weeks.length; w++) {
-    const sub = subs[`${w}-${playerIdx}`];
-    if (sub) continue;
+  // Check if this player is in the regular roster
+  const playerIdx = scheduleData.players.indexOf(playerName);
 
-    const holes: number[] = [];
-    let complete = true;
-    for (let h = 0; h < HOLE_COUNT; h++) {
-      const s = scores[`${w}-${playerIdx}-${h}`];
-      if (s === undefined) { complete = false; break; }
-      holes.push(s);
+  // Weeks where this player was scheduled (roster player)
+  if (playerIdx !== -1) {
+    for (let w = 0; w < scheduleData.weeks.length; w++) {
+      const sub = subs[`${w}-${playerIdx}`];
+      if (sub === 'Casper') continue;
+
+      const holes: number[] = [];
+      let complete = true;
+      for (let h = 0; h < HOLE_COUNT; h++) {
+        const s = scores[`${w}-${playerIdx}-${h}`];
+        if (s === undefined) { complete = false; break; }
+        holes.push(s);
+      }
+      if (!complete) continue;
+
+      results.push({
+        week: w + 1,
+        holes,
+        total: holes.reduce((a, b) => a + b, 0),
+        date: scheduleData.weekDates?.[w],
+        note: sub ? `Sub: ${sub}` : undefined,
+      });
     }
-    if (!complete) continue;
-
-    results.push({
-      week: w + 1,
-      holes,
-      total: holes.reduce((a, b) => a + b, 0),
-      date: scheduleData.weekDates?.[w],
-    });
   }
-  return results;
+
+  // Weeks where this player subbed in for someone else
+  for (let w = 0; w < scheduleData.weeks.length; w++) {
+    for (let pi = 0; pi < scheduleData.players.length; pi++) {
+      if (subs[`${w}-${pi}`] !== playerName) continue;
+
+      const holes: number[] = [];
+      let complete = true;
+      for (let h = 0; h < HOLE_COUNT; h++) {
+        const s = scores[`${w}-${pi}-${h}`];
+        if (s === undefined) { complete = false; break; }
+        holes.push(s);
+      }
+      if (!complete) continue;
+
+      results.push({
+        week: w + 1,
+        holes,
+        total: holes.reduce((a, b) => a + b, 0),
+        date: scheduleData.weekDates?.[w],
+        note: `Subbed for ${scheduleData.players[pi]}`,
+      });
+    }
+  }
+
+  return results.sort((a, b) => a.week - b.week);
 }
 
 function PlayerCard({
@@ -453,8 +482,11 @@ function PlayerCard({
                 Weekly Scores
               </div>
               {weeklyScores.map((ws) => (
-                <div key={ws.week} className="pd-week-scores">
-                  <div className="pd-week-scores-header">Week {ws.week}</div>
+                <div key={`${ws.week}-${ws.note || ''}`} className="pd-week-scores">
+                  <div className="pd-week-scores-header">
+                    Week {ws.week}
+                    {ws.note && <span className="pd-week-note"> — {ws.note}</span>}
+                  </div>
                   <div className="pd-holes-row">
                     {ws.holes.map((s, h) => (
                       <div key={h} className="pd-hole-cell">

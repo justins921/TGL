@@ -2160,6 +2160,14 @@ input, select {
   margin-bottom: 6px;
 }
 
+.pd-week-note {
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .pd-holes-row {
   display: flex;
   gap: 2px;
