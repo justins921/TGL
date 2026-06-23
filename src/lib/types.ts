@@ -25,6 +25,7 @@ export interface ScheduleData {
   scores?: Record<string, number>; // "weekIndex-playerIndex-holeIndex" -> gross strokes
   weekDates?: string[]; // ISO date string per week, editable for rain outs
   substitutions?: Record<string, string>; // "weekIndex-playerIndex" -> sub name or "Casper"
+  weekImages?: Record<string, string[]>; // "weekIndex" -> array of base64 image data URLs
 }
 
 export interface PlayerWeekEntry {

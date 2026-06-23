@@ -287,6 +287,52 @@ export default function Schedule({
     [scheduleData, setScheduleData]
   );
 
+  const handleImageUpload = useCallback(
+    (weekIndex: number, files: FileList | null) => {
+      if (!scheduleData || !files || files.length === 0) return;
+      const maxWidth = 800;
+      const quality = 0.6;
+
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(1, maxWidth / img.width);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+            if (!scheduleData) return;
+            const images = { ...(scheduleData.weekImages || {}) };
+            const key = String(weekIndex);
+            images[key] = [...(images[key] || []), dataUrl];
+            setScheduleData({ ...scheduleData, weekImages: images });
+          };
+          img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      });
+    },
+    [scheduleData, setScheduleData]
+  );
+
+  const handleRemoveImage = useCallback(
+    (weekIndex: number, imgIndex: number) => {
+      if (!scheduleData) return;
+      const images = { ...(scheduleData.weekImages || {}) };
+      const key = String(weekIndex);
+      images[key] = (images[key] || []).filter((_, i) => i !== imgIndex);
+      if (images[key].length === 0) delete images[key];
+      setScheduleData({ ...scheduleData, weekImages: images });
+    },
+    [scheduleData, setScheduleData]
+  );
+
   const stats = scheduleData ? computeStats(scheduleData) : null;
 
   // Current week = first week where not all matches have scores entered
@@ -817,6 +863,40 @@ export default function Schedule({
                   </div>
                   );
                 })}
+                {/* Scorecard Images */}
+                {(scheduleData.weekImages?.[String(weekIndex)]?.length ?? 0) > 0 && (
+                  <div className="week-images">
+                    <div className="week-images-title">Scorecards</div>
+                    <div className="week-images-grid">
+                      {scheduleData.weekImages![String(weekIndex)].map((src, imgIdx) => (
+                        <div key={imgIdx} className="week-image-wrapper">
+                          <img src={src} alt={`Week ${weekIndex + 1} scorecard ${imgIdx + 1}`} className="week-image" />
+                          {isAdmin && (
+                            <button
+                              className="week-image-remove"
+                              onClick={(e) => { e.stopPropagation(); handleRemoveImage(weekIndex, imgIdx); }}
+                            >
+                              &times;
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {isAdmin && (
+                  <label className="week-image-upload">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      style={{ display: 'none' }}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => { handleImageUpload(weekIndex, e.target.files); e.target.value = ''; }}
+                    />
+                    + Add Scorecard Photo
+                  </label>
+                )}
               </div>
               );
             })}
