@@ -1,11 +1,38 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { buildDefaultProfiles } from './lib/types';
+import { buildDefaultProfiles, calculateHandicap } from './lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from './lib/types';
 import { loadSchedules, saveSchedule, updateSchedule, deleteSchedule, loadPlayers, savePlayer, deletePlayer } from './lib/storage';
 import { computeStats } from './lib/scheduleEngine';
 import { AuthProvider, useAuth } from './lib/auth';
 
-// One-time migration: ensure Tom K is in roster and Lee N is a sub
+// Fix player profiles with missing/incorrect previous season averages
+const PROFILE_AVG_FIXES: Record<string, number> = {
+  'Joe D': 46.0,
+  'Kevin F': 48.5,
+  'Phil P': 48.0,
+};
+
+function migratePlayerProfiles(
+  loaded: PlayerProfile[],
+  saveFn: (p: PlayerProfile) => void
+): PlayerProfile[] {
+  let changed = false;
+  const updated = loaded.map((p) => {
+    const correctAvg = PROFILE_AVG_FIXES[p.name];
+    if (correctAvg !== undefined && p.previousSeasonAvg !== correctAvg) {
+      changed = true;
+      const fixed = {
+        ...p,
+        previousSeasonAvg: correctAvg,
+        handicap: calculateHandicap(correctAvg),
+      };
+      saveFn(fixed);
+      return fixed;
+    }
+    return p;
+  });
+  return changed ? updated : loaded;
+}
 function migrateScheduleData(data: ScheduleData): ScheduleData {
   const leeIdx = data.players.indexOf('Lee N');
   const tomSubIdx = data.subs.indexOf('Tom K');
@@ -63,7 +90,8 @@ function AppContent() {
         setPlayers(defaults);
         defaults.forEach((p) => savePlayer(p));
       } else {
-        setPlayers(loaded);
+        const migrated = migratePlayerProfiles(loaded, savePlayer);
+        setPlayers(migrated);
       }
     });
   }, []);
