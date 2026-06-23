@@ -251,6 +251,7 @@ function AppContent() {
           onSave={handleSavePlayer}
           onDelete={handleDeletePlayer}
           isAdmin={isAdmin}
+          scheduleData={scheduleData}
         />
       ) : activeTab === 'analytics' ? (
         <Analytics scheduleData={scheduleData} />

@@ -2139,35 +2139,61 @@ input, select {
   color: var(--text);
 }
 
-.pd-scores-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.pd-score-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.pd-week-scores {
+  margin-bottom: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 10px;
-  min-width: 52px;
+  border-radius: 8px;
+  padding: 8px;
 }
 
-.pd-score-week {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--muted);
+.pd-week-scores:last-child {
+  margin-bottom: 0;
+}
+
+.pd-week-scores-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-800);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  margin-bottom: 6px;
 }
 
-.pd-score-val {
-  font-size: 16px;
-  font-weight: 800;
+.pd-holes-row {
+  display: flex;
+  gap: 2px;
+}
+
+.pd-hole-cell {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.pd-hole-num {
+  display: block;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.pd-hole-val {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pd-hole-total {
+  border-left: 2px solid var(--green-300);
+  padding-left: 6px;
+  min-width: 32px;
+}
+
+.pd-hole-total .pd-hole-val {
   color: var(--green-800);
+  font-weight: 800;
 }
 
 .pd-card-actions {

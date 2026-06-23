@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { calculateHandicap } from '../lib/types';
-import type { PlayerProfile, WeeklyResult } from '../lib/types';
+import { HOLE_COUNT } from '../lib/scoring';
+import type { PlayerProfile, WeeklyResult, ScheduleData } from '../lib/types';
 
 const MAX_HANDICAP = 10;
 
@@ -27,9 +28,10 @@ interface Props {
   onSave: (player: PlayerProfile) => void;
   onDelete: (id: string) => void;
   isAdmin: boolean;
+  scheduleData: ScheduleData | null;
 }
 
-export default function Players({ players, onSave, onDelete, isAdmin }: Props) {
+export default function Players({ players, onSave, onDelete, isAdmin, scheduleData }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<PlayerProfile | null>(null);
   const [filter, setFilter] = useState<'all' | 'roster' | 'subs'>('all');
@@ -326,6 +328,7 @@ export default function Players({ players, onSave, onDelete, isAdmin }: Props) {
             isAdmin={isAdmin}
             onEdit={() => startEdit(player)}
             onDelete={() => onDelete(player.id)}
+            scheduleData={scheduleData}
           />
         );
       })}
@@ -333,25 +336,62 @@ export default function Players({ players, onSave, onDelete, isAdmin }: Props) {
   );
 }
 
+function getPlayerWeeklyScores(
+  playerName: string,
+  scheduleData: ScheduleData | null
+): { week: number; holes: number[]; total: number; date?: string }[] {
+  if (!scheduleData) return [];
+  const playerIdx = scheduleData.players.indexOf(playerName);
+  if (playerIdx === -1) return [];
+
+  const scores = scheduleData.scores || {};
+  const subs = scheduleData.substitutions || {};
+  const results: { week: number; holes: number[]; total: number; date?: string }[] = [];
+
+  for (let w = 0; w < scheduleData.weeks.length; w++) {
+    const sub = subs[`${w}-${playerIdx}`];
+    if (sub) continue;
+
+    const holes: number[] = [];
+    let complete = true;
+    for (let h = 0; h < HOLE_COUNT; h++) {
+      const s = scores[`${w}-${playerIdx}-${h}`];
+      if (s === undefined) { complete = false; break; }
+      holes.push(s);
+    }
+    if (!complete) continue;
+
+    results.push({
+      week: w + 1,
+      holes,
+      total: holes.reduce((a, b) => a + b, 0),
+      date: scheduleData.weekDates?.[w],
+    });
+  }
+  return results;
+}
+
 function PlayerCard({
   player,
   isAdmin,
   onEdit,
   onDelete,
+  scheduleData,
 }: {
   player: PlayerProfile;
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  scheduleData: ScheduleData | null;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const weeklyScores = getPlayerWeeklyScores(player.name, scheduleData);
   const avg =
-    player.weeklyResults.length > 0
-      ? (
-          player.weeklyResults.reduce((s, r) => s + r.score, 0) /
-          player.weeklyResults.length
-        ).toFixed(1)
-      : null;
+    weeklyScores.length > 0
+      ? (weeklyScores.reduce((s, w) => s + w.total, 0) / weeklyScores.length).toFixed(1)
+      : player.weeklyResults.length > 0
+        ? (player.weeklyResults.reduce((s, r) => s + r.score, 0) / player.weeklyResults.length).toFixed(1)
+        : null;
 
   return (
     <div className="card pd-player-card">
@@ -406,20 +446,29 @@ function PlayerCard({
             </div>
           )}
 
-          {/* Weekly Results */}
-          {player.weeklyResults.length > 0 && (
+          {/* Weekly Scores - hole by hole from schedule */}
+          {weeklyScores.length > 0 && (
             <div className="pd-results-table">
               <div className="pd-detail-label" style={{ marginBottom: 6 }}>
                 Weekly Scores
               </div>
-              <div className="pd-scores-grid">
-                {player.weeklyResults.map((r, i) => (
-                  <div key={i} className="pd-score-chip">
-                    <span className="pd-score-week">Wk {r.week}</span>
-                    <span className="pd-score-val">{r.score}</span>
+              {weeklyScores.map((ws) => (
+                <div key={ws.week} className="pd-week-scores">
+                  <div className="pd-week-scores-header">Week {ws.week}</div>
+                  <div className="pd-holes-row">
+                    {ws.holes.map((s, h) => (
+                      <div key={h} className="pd-hole-cell">
+                        <span className="pd-hole-num">{h + 1}</span>
+                        <span className="pd-hole-val">{s}</span>
+                      </div>
+                    ))}
+                    <div className="pd-hole-cell pd-hole-total">
+                      <span className="pd-hole-num">Tot</span>
+                      <span className="pd-hole-val">{ws.total}</span>
+                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           )}
 
