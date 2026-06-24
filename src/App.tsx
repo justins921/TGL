@@ -8,8 +8,8 @@ import { AuthProvider, useAuth } from './lib/auth';
 // Fix player profiles with missing/incorrect previous season averages
 const PROFILE_AVG_FIXES: Record<string, number> = {
   'Joe D': 46.0,
-  'Kevin F': 48.5,
-  'Phil P': 48.0,
+  'Kevin F': 47.4,
+  'Phil P': 46.0,
 };
 
 function computeSubAverage(playerName: string, scheduleData: ScheduleData | null): number | null {
