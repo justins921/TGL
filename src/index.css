@@ -860,26 +860,56 @@ input, select {
   color: var(--green-800);
 }
 
-.week-absences {
-  margin-bottom: 10px;
-  padding: 8px 10px;
-  background: #fff3e0;
+/* ── Availability ── */
+
+.avail-add-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.avail-select,
+.avail-date {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px;
+  border: 1px solid var(--border);
   border-radius: 8px;
+  font-size: 14px;
+  background: var(--surface);
+}
+
+.avail-add-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--green-500);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+.avail-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.avail-date-card {
+  background: #fff3e0;
   border: 1px solid #ffe0b2;
 }
 
-.absence-list {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.absence-label {
-  font-size: 12px;
+.avail-date-header {
+  font-size: 15px;
   font-weight: 700;
   color: #e65100;
+  margin-bottom: 8px;
+}
+
+.avail-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .absence-chip {
@@ -889,8 +919,8 @@ input, select {
   background: #fff;
   border: 1px solid #ffcc80;
   border-radius: 12px;
-  padding: 2px 10px;
-  font-size: 12px;
+  padding: 4px 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #bf360c;
 }
@@ -903,17 +933,6 @@ input, select {
   cursor: pointer;
   padding: 0 2px;
   line-height: 1;
-}
-
-.absence-add {
-  font-size: 12px;
-  padding: 4px 8px;
-  border: 1px dashed #ffcc80;
-  border-radius: 6px;
-  background: transparent;
-  color: #e65100;
-  cursor: pointer;
-  width: 100%;
 }
 
 .week-images {
@@ -2774,8 +2793,6 @@ input, select {
   .swap-btn,
   .fswap-btn,
   .foursome-save-btn,
-  .absence-add,
-  .absence-remove,
   .week-image-upload,
   .week-image-remove,
   .postpone-btn,

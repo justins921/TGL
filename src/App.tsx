@@ -91,14 +91,17 @@ import Analytics from './components/Analytics';
 import Compare from './components/Compare';
 import Players from './components/Players';
 import Leaderboard from './components/Leaderboard';
+import Availability from './components/Availability';
+import type { AbsenceEntry } from './components/Availability';
 import AdminLogin from './components/AdminLogin';
 
-type Tab = 'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players';
+type Tab = 'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players' | 'availability';
 
 const ALL_TABS: { id: Tab; label: string; icon: string; adminOnly: boolean }[] = [
   { id: 'schedule', label: 'Schedule', icon: '\u{1F4C5}', adminOnly: false },
   { id: 'leaderboard', label: 'Standings', icon: '\u{1F3C6}', adminOnly: false },
   { id: 'players', label: 'Players', icon: '\u{1F464}', adminOnly: false },
+  { id: 'availability', label: 'Availability', icon: '\u{1F4C6}', adminOnly: false },
   { id: 'analytics', label: 'Analytics', icon: '\u{1F4CA}', adminOnly: false },
   { id: 'compare', label: 'Compare', icon: '\u2696', adminOnly: true },
 ];
@@ -115,6 +118,27 @@ function AppContent() {
   const [justSaved, setJustSaved] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [activeScheduleId, setActiveScheduleId] = useState<string | null>(null);
+  const [absences, setAbsences] = useState<AbsenceEntry[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('tgl-absences') || '[]');
+    } catch { return []; }
+  });
+
+  const handleAddAbsence = useCallback((entry: AbsenceEntry) => {
+    setAbsences((prev) => {
+      const next = [...prev, entry];
+      localStorage.setItem('tgl-absences', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const handleRemoveAbsence = useCallback((id: string) => {
+    setAbsences((prev) => {
+      const next = prev.filter((a) => a.id !== id);
+      localStorage.setItem('tgl-absences', JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   // Load saved schedules and players on mount
   useEffect(() => {
@@ -322,6 +346,14 @@ function AppContent() {
           onDelete={handleDeletePlayer}
           isAdmin={isAdmin}
           scheduleData={scheduleData}
+        />
+      ) : activeTab === 'availability' ? (
+        <Availability
+          players={players}
+          absences={absences}
+          onAdd={handleAddAbsence}
+          onRemove={handleRemoveAbsence}
+          isAdmin={isAdmin}
         />
       ) : activeTab === 'analytics' ? (
         <Analytics scheduleData={scheduleData} />
