@@ -26,37 +26,50 @@ export function getWeeklyHandicap(
   const profile = playerProfiles.find((p) => p.name === playerName);
   if (!profile) return 0;
 
-  // Find this player's index in the schedule
-  const playerIdx = scheduleData.players.indexOf(playerName);
-  if (playerIdx === -1) return profile.handicap;
-
   const scores = scheduleData.scores || {};
   const subs = scheduleData.substitutions || {};
 
-  // Collect all gross totals from weeks BEFORE this one
-  const weeklyTotals: number[] = [];
-  for (let w = 0; w < weekIndex && w < scheduleData.weeks.length; w++) {
-    // Skip if this player was subbed out or Casper this week
-    const sub = subs[`${w}-${playerIdx}`];
-    if (sub) continue; // sub played or Casper — don't count toward handicap
+  const playerIdx = scheduleData.players.indexOf(playerName);
 
-    // Check if all 9 holes have scores for this week
-    const holeScores: number[] = [];
-    let complete = true;
-    for (let h = 0; h < HOLE_COUNT; h++) {
-      const s = scores[`${w}-${playerIdx}-${h}`];
-      if (s === undefined) {
-        complete = false;
-        break;
+  const weeklyTotals: number[] = [];
+
+  if (playerIdx !== -1) {
+    // Roster player: collect scores from their own schedule slot
+    for (let w = 0; w < weekIndex && w < scheduleData.weeks.length; w++) {
+      const sub = subs[`${w}-${playerIdx}`];
+      if (sub) continue;
+
+      const holeScores: number[] = [];
+      let complete = true;
+      for (let h = 0; h < HOLE_COUNT; h++) {
+        const s = scores[`${w}-${playerIdx}-${h}`];
+        if (s === undefined) { complete = false; break; }
+        holeScores.push(s);
       }
-      holeScores.push(s);
+      if (complete) {
+        weeklyTotals.push(holeScores.reduce((a, b) => a + b, 0));
+      }
     }
-    if (complete) {
-      weeklyTotals.push(holeScores.reduce((a, b) => a + b, 0));
+  } else {
+    // Sub player: collect scores from weeks they subbed in for someone
+    for (let w = 0; w < weekIndex && w < scheduleData.weeks.length; w++) {
+      for (let pi = 0; pi < scheduleData.players.length; pi++) {
+        if (subs[`${w}-${pi}`] !== playerName) continue;
+
+        const holeScores: number[] = [];
+        let complete = true;
+        for (let h = 0; h < HOLE_COUNT; h++) {
+          const s = scores[`${w}-${pi}-${h}`];
+          if (s === undefined) { complete = false; break; }
+          holeScores.push(s);
+        }
+        if (complete) {
+          weeklyTotals.push(holeScores.reduce((a, b) => a + b, 0));
+        }
+      }
     }
   }
 
-  // Build the data points: previous season avg (if exists) + weekly scores
   const dataPoints: number[] = [];
   if (profile.previousSeasonAvg !== null) {
     dataPoints.push(profile.previousSeasonAvg);
