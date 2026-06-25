@@ -96,7 +96,7 @@ export const DEFAULT_ROSTER: { name: string; avg: number | null; isSub: boolean 
   { name: 'Tim B', avg: 47.2, isSub: false },
   { name: 'Tim M', avg: 46.1, isSub: false },
   { name: 'Tom K', avg: 51.0, isSub: false },
-  { name: 'Lee N', avg: null, isSub: true },
+  { name: 'Lee N', avg: 46.0, isSub: true },
   { name: 'Phil P', avg: 46.0, isSub: false },
   { name: 'Joe D', avg: 46.0, isSub: false },
   { name: 'Kevin F', avg: 47.4, isSub: false },
