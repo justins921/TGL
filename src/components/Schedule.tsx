@@ -472,6 +472,32 @@ export default function Schedule({
     [scheduleData, setScheduleData]
   );
 
+  const handleAddAbsence = useCallback(
+    (weekIndex: number, playerName: string) => {
+      if (!scheduleData || !playerName.trim()) return;
+      const absences = { ...(scheduleData.absences || {}) };
+      const key = String(weekIndex);
+      const list = absences[key] || [];
+      if (!list.includes(playerName.trim())) {
+        absences[key] = [...list, playerName.trim()];
+        setScheduleData({ ...scheduleData, absences });
+      }
+    },
+    [scheduleData, setScheduleData]
+  );
+
+  const handleRemoveAbsence = useCallback(
+    (weekIndex: number, playerName: string) => {
+      if (!scheduleData) return;
+      const absences = { ...(scheduleData.absences || {}) };
+      const key = String(weekIndex);
+      absences[key] = (absences[key] || []).filter((n) => n !== playerName);
+      if (absences[key].length === 0) delete absences[key];
+      setScheduleData({ ...scheduleData, absences });
+    },
+    [scheduleData, setScheduleData]
+  );
+
   const handleImageUpload = useCallback(
     (weekIndex: number, files: FileList | null) => {
       if (!scheduleData || !files || files.length === 0) return;
@@ -891,6 +917,47 @@ export default function Schedule({
                     )}
                   </div>
                 </div>
+
+                {/* Absences */}
+                {(() => {
+                  const absentees = scheduleData.absences?.[String(weekIndex)] || [];
+                  if (absentees.length === 0 && !isAdmin) return null;
+                  return (
+                    <div className="week-absences">
+                      {absentees.length > 0 && (
+                        <div className="absence-list">
+                          <span className="absence-label">Out:</span>
+                          {absentees.map((name) => (
+                            <span key={name} className="absence-chip">
+                              {name}
+                              {isAdmin && (
+                                <button
+                                  className="absence-remove"
+                                  onClick={(e) => { e.stopPropagation(); handleRemoveAbsence(weekIndex, name); }}
+                                >
+                                  &times;
+                                </button>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {isAdmin && (
+                        <select
+                          className="absence-add"
+                          value=""
+                          onChange={(e) => { handleAddAbsence(weekIndex, e.target.value); e.target.value = ''; }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <option value="">+ Mark absent...</option>
+                          {scheduleData.players
+                            .filter((p) => !absentees.includes(p))
+                            .map((p) => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {week.foursomes.map((foursome, fIdx) => {
                   const isFSwapSource = foursomeSwap?.week === weekIndex && foursomeSwap?.foursome === fIdx;
