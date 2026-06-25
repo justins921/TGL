@@ -870,29 +870,31 @@ input, select {
 
 .avail-select,
 .avail-date {
-  flex: 1;
-  min-width: 120px;
-  padding: 8px;
+  width: 100%;
+  padding: 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   background: var(--surface);
+  box-sizing: border-box;
+  -webkit-appearance: none;
 }
 
 .avail-add-btn {
+  display: block;
   width: 100%;
-  padding: 10px 16px;
+  padding: 12px 16px;
   border: none;
   border-radius: 8px;
   background: var(--green-500);
   color: #fff;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 16px;
   cursor: pointer;
 }
 .avail-add-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  opacity: 0.5;
+  background: var(--green-300);
 }
 
 .avail-date-card {
