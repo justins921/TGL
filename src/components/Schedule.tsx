@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { generateSchedule, computeStats } from '../lib/scheduleEngine';
-import { HOLE_COUNT, getWeeklyHandicap } from '../lib/scoring';
+import { HOLE_COUNT, getWeeklyHandicap, calculateMatchResult, getStrokesGiven } from '../lib/scoring';
 import { DEFAULT_ROSTER } from '../lib/types';
 import type { ScheduleData, SavedSchedule, PlayerProfile } from '../lib/types';
 import MatchScorecard from './MatchScorecard';
@@ -260,6 +260,191 @@ export default function Schedule({
     },
     [scheduleData]
   );
+
+  const handleExportScores = useCallback(() => {
+    if (!scheduleData) return;
+
+    const scores = scheduleData.scores || {};
+    const subs = scheduleData.substitutions || {};
+
+    // CSV header
+    const header = [
+      'Week', 'Date', 'Foursome', 'Match',
+      'Handicap A', 'Player A',
+      'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'Total',
+      'Handicap B', 'Player B',
+      'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'Total',
+      'Strokes Given A', 'Strokes Given B',
+      'Pts A H1', 'Pts A H2', 'Pts A H3', 'Pts A H4', 'Pts A H5', 'Pts A H6', 'Pts A H7', 'Pts A H8', 'Pts A H9', 'Pts A 10th', 'Pts A Total',
+      'Pts B H1', 'Pts B H2', 'Pts B H3', 'Pts B H4', 'Pts B H5', 'Pts B H6', 'Pts B H7', 'Pts B H8', 'Pts B H9', 'Pts B 10th', 'Pts B Total',
+    ];
+
+    const rows: string[][] = [];
+
+    for (let w = 0; w < scheduleData.weeks.length; w++) {
+      const week = scheduleData.weeks[w];
+      const weekDate = scheduleData.weekDates?.[w] || '';
+
+      for (let fIdx = 0; fIdx < week.foursomes.length; fIdx++) {
+        const foursome = week.foursomes[fIdx];
+
+        for (let mIdx = 0; mIdx < foursome.matchups.length; mIdx++) {
+          const [a, b] = foursome.matchups[mIdx];
+
+          const subA = subs[`${w}-${a}`];
+          const subB = subs[`${w}-${b}`];
+          const casperA = subA === 'Casper';
+          const casperB = subB === 'Casper';
+
+          // Determine effective handicap (same logic as Leaderboard.tsx)
+          const hcpA = subA && !casperA
+            ? getWeeklyHandicap(subA, w, scheduleData, playerProfiles)
+            : getWeeklyHandicap(scheduleData.players[a], w, scheduleData, playerProfiles);
+          const hcpB = subB && !casperB
+            ? getWeeklyHandicap(subB, w, scheduleData, playerProfiles)
+            : getWeeklyHandicap(scheduleData.players[b], w, scheduleData, playerProfiles);
+
+          // Build display names
+          let nameA: string;
+          if (casperA) {
+            nameA = 'Casper';
+          } else if (subA) {
+            nameA = `${scheduleData.players[a]} (Sub: ${subA})`;
+          } else {
+            nameA = scheduleData.players[a];
+          }
+
+          let nameB: string;
+          if (casperB) {
+            nameB = 'Casper';
+          } else if (subB) {
+            nameB = `${scheduleData.players[b]} (Sub: ${subB})`;
+          } else {
+            nameB = scheduleData.players[b];
+          }
+
+          // Gather gross scores
+          const grossA: (number | undefined)[] = [];
+          const grossB: (number | undefined)[] = [];
+          for (let h = 0; h < HOLE_COUNT; h++) {
+            grossA.push(scores[`${w}-${a}-${h}`]);
+            grossB.push(scores[`${w}-${b}-${h}`]);
+          }
+
+          // Calculate match result
+          const result = calculateMatchResult(grossA, grossB, hcpA, hcpB, casperA, casperB);
+
+          // Compute strokes given totals
+          const strokesA = getStrokesGiven(hcpA, hcpB);
+          const strokesB = getStrokesGiven(hcpB, hcpA);
+          const totalStrokesA = strokesA.reduce((s, v) => s + v, 0);
+          const totalStrokesB = strokesB.reduce((s, v) => s + v, 0);
+
+          // Build score columns for player A
+          const scoresAStr: string[] = [];
+          let totalA = 0;
+          for (let h = 0; h < HOLE_COUNT; h++) {
+            if (casperA) {
+              scoresAStr.push('');
+            } else if (grossA[h] !== undefined) {
+              scoresAStr.push(String(grossA[h]));
+              totalA += grossA[h]!;
+            } else {
+              scoresAStr.push('');
+            }
+          }
+          const totalAStr = casperA ? '' : (grossA.every(v => v !== undefined) ? String(totalA) : '');
+
+          // Build score columns for player B
+          const scoresBStr: string[] = [];
+          let totalB = 0;
+          for (let h = 0; h < HOLE_COUNT; h++) {
+            if (casperB) {
+              scoresBStr.push('');
+            } else if (grossB[h] !== undefined) {
+              scoresBStr.push(String(grossB[h]));
+              totalB += grossB[h]!;
+            } else {
+              scoresBStr.push('');
+            }
+          }
+          const totalBStr = casperB ? '' : (grossB.every(v => v !== undefined) ? String(totalB) : '');
+
+          // Build points columns
+          const ptsAHoles: string[] = [];
+          const ptsBHoles: string[] = [];
+          let ptA10th = '';
+          let ptATot = '';
+          let ptB10th = '';
+          let ptBTot = '';
+
+          if (result) {
+            for (let h = 0; h < HOLE_COUNT; h++) {
+              ptsAHoles.push(String(result.holePointsA[h]));
+              ptsBHoles.push(String(result.holePointsB[h]));
+            }
+            ptA10th = String(result.totalPointA);
+            ptATot = String(result.totalPointsA);
+            ptB10th = String(result.totalPointB);
+            ptBTot = String(result.totalPointsB);
+          } else {
+            for (let h = 0; h < HOLE_COUNT; h++) {
+              ptsAHoles.push('');
+              ptsBHoles.push('');
+            }
+          }
+
+          const row = [
+            String(w + 1),
+            weekDate,
+            String(fIdx + 1),
+            String(mIdx + 1),
+            String(hcpA),
+            nameA,
+            ...scoresAStr,
+            totalAStr,
+            String(hcpB),
+            nameB,
+            ...scoresBStr,
+            totalBStr,
+            String(totalStrokesA),
+            String(totalStrokesB),
+            ...ptsAHoles,
+            ptA10th,
+            ptATot,
+            ...ptsBHoles,
+            ptB10th,
+            ptBTot,
+          ];
+
+          rows.push(row);
+        }
+      }
+    }
+
+    // Build CSV content
+    const escapeCSV = (val: string) => {
+      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+      return val;
+    };
+    const csvContent = [
+      header.map(escapeCSV).join(','),
+      ...rows.map(row => row.map(escapeCSV).join(',')),
+    ].join('\n');
+
+    // Trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'tgl-scores-export.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [scheduleData, playerProfiles]);
 
   const handleWeekDateChange = useCallback(
     (weekIndex: number, newDate: string) => {
@@ -610,6 +795,12 @@ export default function Schedule({
                   onClick={() => setShowSetup(true)}
                 >
                   &#9998; Edit Setup
+                </button>
+                <button
+                  className="action-btn secondary"
+                  onClick={handleExportScores}
+                >
+                  &#128190; Export Scores
                 </button>
               </div>
             )}
