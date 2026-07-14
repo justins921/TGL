@@ -12,6 +12,7 @@ const PROFILE_AVG_FIXES: Record<string, number> = {
   'Phil P': 46.0,
   'Lee N': 46.0,
   'Jorgie': 47.4,
+  'John Kloehn': 46.0,
 };
 
 function computeSubAverage(playerName: string, scheduleData: ScheduleData | null): number | null {
