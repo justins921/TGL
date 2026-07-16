@@ -95,12 +95,14 @@ import Leaderboard from './components/Leaderboard';
 import Availability from './components/Availability';
 import type { AbsenceEntry } from './components/Availability';
 import AdminLogin from './components/AdminLogin';
+import Tournament from './components/Tournament';
 
-type Tab = 'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players' | 'availability';
+type Tab = 'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players' | 'availability' | 'tournament';
 
 const ALL_TABS: { id: Tab; label: string; icon: string; adminOnly: boolean }[] = [
   { id: 'schedule', label: 'Schedule', icon: '\u{1F4C5}', adminOnly: false },
   { id: 'leaderboard', label: 'Standings', icon: '\u{1F3C6}', adminOnly: false },
+  { id: 'tournament', label: 'Tournament', icon: '\u{1F3CC}', adminOnly: false },
   { id: 'players', label: 'Players', icon: '\u{1F464}', adminOnly: false },
   { id: 'availability', label: 'Availability', icon: '\u{1F4C6}', adminOnly: false },
   { id: 'analytics', label: 'Analytics', icon: '\u{1F4CA}', adminOnly: false },
@@ -356,6 +358,8 @@ function AppContent() {
           onRemove={handleRemoveAbsence}
           isAdmin={isAdmin}
         />
+      ) : activeTab === 'tournament' ? (
+        <Tournament isAdmin={isAdmin} />
       ) : activeTab === 'analytics' ? (
         <Analytics scheduleData={scheduleData} />
       ) : (
