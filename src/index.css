@@ -2553,6 +2553,602 @@ input, select {
   padding: 8px 0;
 }
 
+/* ── Tournament ── */
+
+.tourn-section-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+}
+
+.tourn-section-tab {
+  flex: 1;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.tourn-section-tab:hover {
+  color: var(--text);
+  background: var(--card);
+}
+
+.tourn-section-tab.active {
+  background: var(--card);
+  color: var(--green-800);
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+}
+
+.tourn-round-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.tourn-round-tab {
+  flex: 1;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.tourn-round-tab:hover {
+  border-color: var(--green-700);
+  color: var(--green-800);
+  background: var(--green-50);
+}
+
+.tourn-round-tab.active {
+  background: var(--green-800);
+  border-color: var(--green-800);
+  color: #fff;
+}
+
+.tourn-round-check {
+  color: var(--gold);
+}
+
+.tourn-round-tab.active .tourn-round-check {
+  color: var(--gold);
+}
+
+.tourn-teeoff-note {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 4px 0;
+}
+
+/* Foursome Cards */
+.tourn-foursome-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.tourn-foursome-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.tourn-foursome-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.tourn-foursome-tee {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.tourn-players-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tourn-player-chip {
+  flex: 1;
+  min-width: 60px;
+  text-align: center;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.tourn-player-chip.tier-a {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.tourn-player-chip.tier-b {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  color: #3730a3;
+  border: 1px solid #a5b4fc;
+}
+
+.tourn-player-chip.tier-c {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.tourn-player-chip.tier-d {
+  background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+  color: #9d174d;
+  border: 1px solid #f9a8d4;
+}
+
+/* Small tier chips */
+.tourn-player-chip-sm {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tourn-player-chip-sm.tier-a {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tourn-player-chip-sm.tier-b {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.tourn-player-chip-sm.tier-c {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tourn-player-chip-sm.tier-d {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+/* Scores preview in schedule cards */
+.tourn-scores-preview {
+  margin-top: 12px;
+  padding: 10px;
+  background: var(--green-50);
+  border-radius: 8px;
+  border: 1px solid var(--green-100);
+}
+
+.tourn-scores-row {
+  display: flex;
+  gap: 2px;
+}
+
+.tourn-score-cell {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.tourn-score-hole {
+  display: block;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.tourn-score-val {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tourn-score-total {
+  border-left: 2px solid var(--green-100);
+  padding-left: 6px;
+  min-width: 36px;
+}
+
+.tourn-score-total .tourn-score-val {
+  color: var(--green-800);
+}
+
+/* Scoring Table */
+.tourn-scoring-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tourn-scoring-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+}
+
+.tourn-scoring-table th {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 8px 4px;
+  text-align: center;
+  border-bottom: 2px solid var(--border);
+}
+
+.tourn-scoring-label-col {
+  text-align: left !important;
+  min-width: 100px;
+}
+
+.tourn-scoring-hole-col {
+  width: 40px;
+  min-width: 40px;
+}
+
+.tourn-scoring-total-col {
+  width: 48px;
+  min-width: 48px;
+  border-left: 2px solid var(--border);
+}
+
+.tourn-scoring-table td {
+  padding: 6px 4px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.tourn-scoring-label {
+  text-align: left !important;
+  padding-left: 4px !important;
+}
+
+.tourn-scoring-fname {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tourn-scoring-fplayers {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.tourn-scoring-total {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--green-800);
+  border-left: 2px solid var(--border);
+}
+
+.tourn-score-input {
+  width: 36px;
+  padding: 4px 2px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  background: var(--card);
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+
+.tourn-score-input:focus {
+  outline: none;
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
+}
+
+.tourn-score-input::-webkit-inner-spin-button,
+.tourn-score-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.tourn-score-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.tourn-clear-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.tourn-clear-btn:hover {
+  background: var(--danger-light);
+  border-color: var(--danger);
+}
+
+/* Skins Leaderboard */
+.tourn-lb-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tourn-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.tourn-lb-row.leader {
+  background: var(--green-50);
+  border-color: var(--green-100);
+}
+
+.tourn-lb-rank {
+  width: 28px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--muted);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tourn-lb-row.leader .tourn-lb-rank {
+  color: var(--green-800);
+}
+
+.tourn-lb-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+
+.tourn-lb-members {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.tourn-lb-skins {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--green-800);
+  min-width: 36px;
+  text-align: right;
+}
+
+.tourn-lb-summary {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: 8px;
+  padding: 6px 0;
+}
+
+/* Skins Detail Table */
+.tourn-skins-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tourn-skins-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 380px;
+}
+
+.tourn-skins-table th {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 2px solid var(--border);
+}
+
+.tourn-skins-hole-header {
+  width: 40px;
+}
+
+.tourn-skins-table td {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.tourn-skins-hole-num {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.tourn-skins-score {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tourn-skins-score.winner {
+  background: var(--green-50);
+  color: var(--green-800);
+  font-weight: 800;
+}
+
+.tourn-skins-score.loser {
+  color: var(--muted);
+}
+
+.tourn-skins-result {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.tourn-skins-won {
+  color: var(--green-800);
+  font-weight: 700;
+}
+
+.tourn-skins-carry {
+  color: var(--orange-text);
+  font-weight: 600;
+  background: var(--orange-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.tourn-skins-pending {
+  color: var(--muted);
+}
+
+/* Analytics - Full Schedule */
+.tourn-full-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tourn-full-round {
+  padding: 10px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.tourn-full-round-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--green-800);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.tourn-full-round-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.tourn-full-foursome {
+  text-align: center;
+}
+
+.tourn-full-foursome-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.tourn-full-foursome-players {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+}
+
+/* Analytics - Matrix sections */
+.tourn-matrix-section {
+  margin-bottom: 16px;
+}
+
+.tourn-matrix-section:last-child {
+  margin-bottom: 0;
+}
+
+.tourn-matrix-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+/* Analytics - Anchor blocks */
+.tourn-anchor-block {
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+
+.tourn-anchor-block:last-child {
+  margin-bottom: 0;
+}
+
+.tourn-anchor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tourn-anchor-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tourn-anchor-rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tourn-anchor-round {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tourn-anchor-round-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 28px;
+  flex-shrink: 0;
+}
+
 /* ── Responsive ── */
 
 /* Tablet and below */
@@ -2786,6 +3382,54 @@ input, select {
   .form-row {
     flex-direction: column;
     gap: 10px;
+  }
+
+  /* Tournament */
+  .tourn-section-tab {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+
+  .tourn-round-tab {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  .tourn-player-chip {
+    font-size: 13px;
+    padding: 8px 6px;
+    min-width: 50px;
+  }
+
+  .tourn-foursome-card {
+    padding: 12px;
+  }
+
+  .tourn-scoring-table {
+    min-width: 420px;
+  }
+
+  .tourn-score-input {
+    width: 32px;
+    font-size: 13px;
+  }
+
+  .tourn-full-round-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .tourn-lb-row {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .tourn-lb-name {
+    font-size: 13px;
+  }
+
+  .tourn-lb-skins {
+    font-size: 18px;
   }
 }
 
