@@ -9,18 +9,16 @@ const ROTATION: string[][][] = [
   [['A1','B3','C1','D1'], ['A2','B4','C4','D4'], ['A3','B1','C3','D3'], ['A4','B2','C2','D2']],
   // Round 3
   [['A1','B2','C4','D3'], ['A2','B1','C1','D2'], ['A3','B4','C2','D1'], ['A4','B3','C3','D4']],
-  // Round 4
-  [['A1','B1','C2','D4'], ['A2','B2','C3','D1'], ['A3','B3','C4','D2'], ['A4','B4','C1','D3']],
 ];
 
 const HOLES_PER_ROUND = 9;
-const NUM_ROUNDS = 4;
+const NUM_ROUNDS = 3;
 const NUM_FOURSOMES = 4;
 
 type TournamentScores = Record<string, number>;
 
 interface SkinResult {
-  hole: number; // global hole number 1-36
+  hole: number; // global hole number 1-27
   round: number;
   holeInRound: number;
   winner: number | null; // foursome index (0-3) or null if carried
@@ -232,7 +230,7 @@ export default function Tournament({ isAdmin }: Props) {
       <div className="banner">
         <div className="banner-icon">&#127942;</div>
         <h1>Tournament</h1>
-        <p>36-Hole Scramble Skins</p>
+        <p>27-Hole Scramble Skins</p>
       </div>
 
       <div className="page-content">
@@ -463,8 +461,8 @@ export default function Tournament({ isAdmin }: Props) {
                   ))}
               </div>
               <div className="tourn-lb-summary">
-                {totalSkinsAwarded} of 36 skins awarded
-                {36 - totalSkinsAwarded > 0 && skinResults.some((r) => r.winner === null && r.scores.every((s) => s !== null)) && (
+                {totalSkinsAwarded} of 27 skins awarded
+                {27 - totalSkinsAwarded > 0 && skinResults.some((r) => r.winner === null && r.scores.every((s) => s !== null)) && (
                   <> &middot; {skinResults.filter((r) => r.winner === null && r.scores.every((s) => s !== null)).length} carried</>
                 )}
               </div>
