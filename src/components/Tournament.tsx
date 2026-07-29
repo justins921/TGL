@@ -5,10 +5,10 @@ import { useState, useCallback, useMemo } from 'react';
 const ROTATION: string[][][] = [
   // Round 1
   [['A1','B4','C3','D2'], ['A2','B3','C2','D3'], ['A3','B2','C1','D4'], ['A4','B1','C4','D1']],
-  // Round 2
-  [['A1','B3','C1','D1'], ['A2','B4','C4','D4'], ['A3','B1','C3','D3'], ['A4','B2','C2','D2']],
-  // Round 3
-  [['A1','B2','C4','D3'], ['A2','B1','C1','D2'], ['A3','B4','C2','D1'], ['A4','B3','C3','D4']],
+  // Round 2 (quick swap, gap=2)
+  [['A1','B3','C3','D4'], ['A2','B2','C4','D3'], ['A3','B4','C1','D2'], ['A4','B1','C2','D1']],
+  // Round 3 (after lunch)
+  [['A1','B3','C4','D2'], ['A2','B4','C2','D4'], ['A3','B1','C1','D3'], ['A4','B2','C3','D1']],
 ];
 
 const HOLES_PER_ROUND = 9;
