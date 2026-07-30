@@ -422,6 +422,15 @@ function PlayerCard({
         ? (player.weeklyResults.reduce((s, r) => s + r.score, 0) / player.weeklyResults.length).toFixed(1)
         : null;
 
+  // Compute current dynamic handicap from prev avg + all weekly scores
+  const currentHandicap = (() => {
+    if (weeklyScores.length === 0) return player.handicap;
+    const dataPoints: number[] = [];
+    if (player.previousSeasonAvg !== null) dataPoints.push(player.previousSeasonAvg);
+    dataPoints.push(...weeklyScores.map((ws) => ws.total));
+    return calculateHandicap(dataPoints.reduce((a, b) => a + b, 0) / dataPoints.length);
+  })();
+
   return (
     <div className="card pd-player-card">
       <div className="pd-player-header" onClick={() => setExpanded(!expanded)}>
@@ -440,7 +449,7 @@ function PlayerCard({
             {player.isSub && <span className="pd-sub-badge">SUB</span>}
           </div>
           <div className="pd-player-meta">
-            HCP {player.handicap}
+            HCP {currentHandicap}
             {avg && <> &middot; Avg {avg}</>}
             {player.previousSeasonAvg !== null && (
               <> &middot; Prev {player.previousSeasonAvg}</>
@@ -466,7 +475,7 @@ function PlayerCard({
           )}
           <div className="pd-detail-row">
             <span className="pd-detail-label">Handicap</span>
-            <span className="pd-detail-value">{player.handicap}</span>
+            <span className="pd-detail-value">{currentHandicap}</span>
           </div>
           {player.previousSeasonAvg !== null && (
             <div className="pd-detail-row">
