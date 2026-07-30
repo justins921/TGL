@@ -415,19 +415,35 @@ function PlayerCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const weeklyScores = getPlayerWeeklyScores(player.name, scheduleData);
+  // Deduplicate by week for average (sub playing two matches = one round)
+  const uniqueWeekScores = (() => {
+    const seen = new Set<number>();
+    return weeklyScores.filter((ws) => {
+      if (seen.has(ws.week)) return false;
+      seen.add(ws.week);
+      return true;
+    });
+  })();
   const avg =
-    weeklyScores.length > 0
-      ? (weeklyScores.reduce((s, w) => s + w.total, 0) / weeklyScores.length).toFixed(1)
+    uniqueWeekScores.length > 0
+      ? (uniqueWeekScores.reduce((s, w) => s + w.total, 0) / uniqueWeekScores.length).toFixed(1)
       : player.weeklyResults.length > 0
         ? (player.weeklyResults.reduce((s, r) => s + r.score, 0) / player.weeklyResults.length).toFixed(1)
         : null;
 
-  // Compute current dynamic handicap from prev avg + all weekly scores
+  // Compute current dynamic handicap from prev avg + unique weekly scores
+  // Deduplicate by week (if a sub plays two matches in one week, count only once)
   const currentHandicap = (() => {
     if (weeklyScores.length === 0) return player.handicap;
     const dataPoints: number[] = [];
     if (player.previousSeasonAvg !== null) dataPoints.push(player.previousSeasonAvg);
-    dataPoints.push(...weeklyScores.map((ws) => ws.total));
+    const seenWeeks = new Set<number>();
+    for (const ws of weeklyScores) {
+      if (!seenWeeks.has(ws.week)) {
+        seenWeeks.add(ws.week);
+        dataPoints.push(ws.total);
+      }
+    }
     return calculateHandicap(dataPoints.reduce((a, b) => a + b, 0) / dataPoints.length);
   })();
 

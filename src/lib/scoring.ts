@@ -52,7 +52,10 @@ export function getWeeklyHandicap(
     }
   } else {
     // Sub player: collect scores from weeks they subbed in for someone
+    // Deduplicate by week (if subbing for 2 players same week, count once)
+    const seenWeeks = new Set<number>();
     for (let w = 0; w < weekIndex && w < scheduleData.weeks.length; w++) {
+      if (seenWeeks.has(w)) continue;
       for (let pi = 0; pi < scheduleData.players.length; pi++) {
         if (subs[`${w}-${pi}`] !== playerName) continue;
 
@@ -65,6 +68,8 @@ export function getWeeklyHandicap(
         }
         if (complete) {
           weeklyTotals.push(holeScores.reduce((a, b) => a + b, 0));
+          seenWeeks.add(w);
+          break;
         }
       }
     }
