@@ -203,6 +203,31 @@ export default function Tournament({ isAdmin }: Props) {
 
   const totalSkinsAwarded = skinsLeaderboard.reduce((a, b) => a + b, 0);
 
+  // Individual player skins: each player gets credit for skins won
+  // by their foursome during the round they were in it
+  const playerSkins = useMemo(() => {
+    const totals: Record<string, number> = {};
+    // Initialize all players
+    for (const round of ROTATION) {
+      for (const foursome of round) {
+        for (const player of foursome) {
+          if (!totals[player]) totals[player] = 0;
+        }
+      }
+    }
+    for (const result of skinResults) {
+      if (result.winner === null) continue;
+      const round = result.round;
+      const foursome = ROTATION[round][result.winner];
+      for (const player of foursome) {
+        totals[player] += result.skinsWon;
+      }
+    }
+    return Object.entries(totals)
+      .map(([name, skins]) => ({ name, skins }))
+      .sort((a, b) => b.skins - a.skins || a.name.localeCompare(b.name));
+  }, [skinResults]);
+
   const pairingMatrix = useMemo(() => buildPairingMatrix(), []);
 
   // Check if a round has any scores
@@ -465,6 +490,23 @@ export default function Tournament({ isAdmin }: Props) {
                 {27 - totalSkinsAwarded > 0 && skinResults.some((r) => r.winner === null && r.scores.every((s) => s !== null)) && (
                   <> &middot; {skinResults.filter((r) => r.winner === null && r.scores.every((s) => s !== null)).length} carried</>
                 )}
+              </div>
+            </div>
+
+            {/* Individual Player Skins */}
+            <div className="card">
+              <div className="card-title">Individual Skins</div>
+              <div className="tourn-lb-grid">
+                {playerSkins.map((entry, rank) => (
+                  <div
+                    key={entry.name}
+                    className={`tourn-lb-row${rank === 0 && entry.skins > 0 ? ' leader' : ''}`}
+                  >
+                    <span className="tourn-lb-rank">{rank + 1}</span>
+                    <span className="tourn-lb-name">{entry.name}</span>
+                    <span className="tourn-lb-skins">{entry.skins}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
