@@ -3,12 +3,12 @@ import { useState, useCallback, useMemo } from 'react';
 // ── Rotation schedule (fixed) ──
 // Each round: 4 foursomes, each with [A, B, C, D] tier labels
 const ROTATION: string[][][] = [
-  // Round 1
+  // Round 1 (all teams avg 34)
   [['A1','B4','C3','D2'], ['A2','B3','C2','D3'], ['A3','B2','C1','D4'], ['A4','B1','C4','D1']],
-  // Round 2 (quick swap, gap=2)
-  [['A1','B3','C3','D4'], ['A2','B2','C4','D3'], ['A3','B4','C1','D2'], ['A4','B1','C2','D1']],
+  // Round 2 (quick swap F1↔F2, F3↔F4)
+  [['A1','B3','C3','D3'], ['A2','B4','C2','D2'], ['A3','B1','C4','D4'], ['A4','B2','C1','D1']],
   // Round 3 (after lunch)
-  [['A1','B3','C4','D2'], ['A2','B4','C2','D4'], ['A3','B1','C1','D3'], ['A4','B2','C3','D1']],
+  [['A1','B2','C4','D3'], ['A2','B1','C1','D2'], ['A3','B4','C2','D1'], ['A4','B3','C3','D4']],
 ];
 
 const HOLES_PER_ROUND = 9;
