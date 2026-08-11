@@ -1,9 +1,17 @@
 import { useState, useCallback, useMemo } from 'react';
 
+// ── Player assignments by tier ──
+const PLAYER_NAMES: Record<string, string> = {
+  'A1': 'Jeff B', 'A2': 'Justin S', 'A3': 'Tim M', 'A4': 'John M',
+  'B1': 'Joe D', 'B2': 'Mike S', 'B3': 'Lee N', 'B4': 'Tim B',
+  'C1': 'Buddha', 'C2': 'Bryon A', 'C3': 'Mark L', 'C4': 'Kevin F',
+  'D1': 'Terry S', 'D2': 'David L', 'D3': 'Rudy', 'D4': 'Tom K',
+};
+
 // ── Rotation schedule (fixed) ──
 // Each round: 4 foursomes, each with [A, B, C, D] tier labels
 const ROTATION: string[][][] = [
-  // Round 1 (all teams avg 34)
+  // Round 1
   [['A1','B4','C3','D2'], ['A2','B3','C2','D3'], ['A3','B2','C1','D4'], ['A4','B1','C4','D1']],
   // Round 2 (quick swap F1↔F2, F3↔F4)
   [['A1','B3','C3','D3'], ['A2','B4','C2','D2'], ['A3','B1','C4','D4'], ['A4','B2','C1','D1']],
@@ -321,9 +329,10 @@ export default function Tournament({ isAdmin }: Props) {
                 <div className="tourn-players-grid">
                   {foursome.map((player, pIdx) => {
                     const tier = player[0];
+                    const name = PLAYER_NAMES[player];
                     return (
                       <div key={pIdx} className={`tourn-player-chip tier-${tier.toLowerCase()}`}>
-                        {player}
+                        {name ? `${name} (${player})` : player}
                       </div>
                     );
                   })}
@@ -477,10 +486,7 @@ export default function Tournament({ isAdmin }: Props) {
                       className={`tourn-lb-row${rank === 0 && entry.total > 0 ? ' leader' : ''}`}
                     >
                       <span className="tourn-lb-rank">{rank + 1}</span>
-                      <span className="tourn-lb-name">Foursome {entry.foursome + 1}</span>
-                      <span className="tourn-lb-members">
-                        {ROTATION[0][entry.foursome][0]}
-                      </span>
+                      <span className="tourn-lb-name">F{entry.foursome + 1}: {PLAYER_NAMES[ROTATION[0][entry.foursome][0]] || ROTATION[0][entry.foursome][0]}</span>
                       <span className="tourn-lb-skins">{entry.total}</span>
                     </div>
                   ))}
@@ -503,7 +509,7 @@ export default function Tournament({ isAdmin }: Props) {
                     className={`tourn-lb-row${rank === 0 && entry.skins > 0 ? ' leader' : ''}`}
                   >
                     <span className="tourn-lb-rank">{rank + 1}</span>
-                    <span className="tourn-lb-name">{entry.name}</span>
+                    <span className="tourn-lb-name">{PLAYER_NAMES[entry.name] || entry.name} ({entry.name})</span>
                     <span className="tourn-lb-skins">{entry.skins}</span>
                   </div>
                 ))}
@@ -599,7 +605,7 @@ export default function Tournament({ isAdmin }: Props) {
                           <div className="tourn-full-foursome-players">
                             {foursome.map((p, i) => (
                               <span key={i} className={`tourn-player-chip-sm tier-${p[0].toLowerCase()}`}>
-                                {p}
+                                {PLAYER_NAMES[p] || p}
                               </span>
                             ))}
                           </div>
@@ -742,7 +748,7 @@ export default function Tournament({ isAdmin }: Props) {
               {[1,2,3,4].map((a) => (
                 <div key={a} className="tourn-anchor-block">
                   <div className="tourn-anchor-header">
-                    <span className="tourn-player-chip-sm tier-a">A{a}</span>
+                    <span className="tourn-player-chip-sm tier-a">{PLAYER_NAMES['A'+a] || 'A'+a}</span>
                     <span className="tourn-anchor-label">Foursome {a} Anchor</span>
                   </div>
                   <div className="tourn-anchor-rounds">
@@ -754,7 +760,7 @@ export default function Tournament({ isAdmin }: Props) {
                           <span className="tourn-anchor-round-label">R{r + 1}:</span>
                           {teammates.map((t, i) => (
                             <span key={i} className={`tourn-player-chip-sm tier-${t[0].toLowerCase()}`}>
-                              {t}
+                              {PLAYER_NAMES[t] || t}
                             </span>
                           ))}
                         </div>
