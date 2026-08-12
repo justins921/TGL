@@ -117,7 +117,7 @@ function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roun
     const totalLeftovers = unclaimed + heldBack;
 
     if (totalLeftovers > 0) {
-      // Award to team with lowest 9-hole total
+      // Award leftovers based on lowest 9-hole total
       const roundTotals: (number | null)[] = [];
       for (let f = 0; f < NUM_FOURSOMES; f++) {
         let total = 0;
@@ -133,15 +133,43 @@ function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roun
       const validTotals = roundTotals.filter((t): t is number => t !== null);
       if (validTotals.length > 0) {
         const minTotal = Math.min(...validTotals);
-        const winners = roundTotals
+        const lowTeams = roundTotals
           .map((t, i) => t === minTotal ? i : -1)
           .filter((i) => i >= 0);
-        roundLeftovers.push({
-          round: r,
-          leftovers: totalLeftovers,
-          winners,
-          perTeam: totalLeftovers / winners.length,
-        });
+        const allTeams = roundTotals
+          .map((t, i) => t !== null ? i : -1)
+          .filter((i) => i >= 0);
+
+        if (lowTeams.length > 1) {
+          // Tied for lowest: split ALL leftovers evenly among all teams
+          roundLeftovers.push({
+            round: r,
+            leftovers: totalLeftovers,
+            winners: allTeams,
+            perTeam: totalLeftovers / allTeams.length,
+          });
+        } else {
+          // Sole lowest team gets up to 3, remainder split among all teams
+          const toWinner = Math.min(3, totalLeftovers);
+          const remainder = totalLeftovers - toWinner;
+
+          if (toWinner > 0) {
+            roundLeftovers.push({
+              round: r,
+              leftovers: toWinner,
+              winners: lowTeams,
+              perTeam: toWinner,
+            });
+          }
+          if (remainder > 0) {
+            roundLeftovers.push({
+              round: r,
+              leftovers: remainder,
+              winners: allTeams,
+              perTeam: remainder / allTeams.length,
+            });
+          }
+        }
       }
     }
   }
