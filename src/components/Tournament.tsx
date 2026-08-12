@@ -30,20 +30,34 @@ interface SkinResult {
   round: number;
   holeInRound: number;
   winner: number | null; // foursome index (0-3) or null if carried
-  skinsWon: number; // how many skins this hole is worth (1 + carried)
+  skinsWon: number; // how many skins won on this hole
   scores: (number | null)[]; // score for each foursome
+  available: number; // pile available going into this hole
+  capped: boolean; // true if skins were held back due to cap
+}
+
+// Leftover skins awarded at end of each 9
+interface RoundLeftover {
+  round: number;
+  leftovers: number;
+  winners: number[]; // foursome indices that split leftovers
+  perTeam: number; // leftovers / winners.length
 }
 
 interface Props {
   isAdmin: boolean;
 }
 
-// ── Skins calculation (pure function) ──
-function calculateSkins(scores: TournamentScores): SkinResult[] {
+// ── Skins calculation (modified rules) ──
+// Each 9 is independent. Pile capped at 3. Leftovers go to lowest 9-hole total.
+function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roundLeftovers: RoundLeftover[] } {
   const results: SkinResult[] = [];
-  let carryOver = 0;
+  const roundLeftovers: RoundLeftover[] = [];
 
   for (let r = 0; r < NUM_ROUNDS; r++) {
+    let available = 1; // pile starts at 1 each hole
+    let heldBack = 0; // skins held back due to cap
+
     for (let h = 0; h < HOLES_PER_ROUND; h++) {
       const globalHole = r * HOLES_PER_ROUND + h + 1;
       const foursomeScores: (number | null)[] = [];
@@ -53,18 +67,13 @@ function calculateSkins(scores: TournamentScores): SkinResult[] {
         foursomeScores.push(scores[key] !== undefined ? scores[key] : null);
       }
 
-      // Check if all foursomes have scores for this hole
       const validScores = foursomeScores.filter((s): s is number => s !== null);
 
       if (validScores.length < NUM_FOURSOMES) {
-        // Not all scores entered yet
         results.push({
-          hole: globalHole,
-          round: r,
-          holeInRound: h,
-          winner: null,
-          skinsWon: 0,
-          scores: foursomeScores,
+          hole: globalHole, round: r, holeInRound: h,
+          winner: null, skinsWon: 0, scores: foursomeScores,
+          available, capped: false,
         });
         continue;
       }
@@ -73,34 +82,71 @@ function calculateSkins(scores: TournamentScores): SkinResult[] {
       const winnersCount = foursomeScores.filter((s) => s === minScore).length;
 
       if (winnersCount === 1) {
-        // Sole winner
         const winnerIdx = foursomeScores.indexOf(minScore);
-        carryOver++;
         results.push({
-          hole: globalHole,
-          round: r,
-          holeInRound: h,
-          winner: winnerIdx,
-          skinsWon: carryOver,
-          scores: foursomeScores,
+          hole: globalHole, round: r, holeInRound: h,
+          winner: winnerIdx, skinsWon: available, scores: foursomeScores,
+          available, capped: false,
         });
-        carryOver = 0;
+        available = 1; // reset after win
       } else {
-        // Tie - carries over
-        carryOver++;
-        results.push({
-          hole: globalHole,
+        // Tie — carry over but cap at 3
+        const capped = available >= 3;
+        if (capped) {
+          heldBack++; // this hole's skin goes to leftovers
+          results.push({
+            hole: globalHole, round: r, holeInRound: h,
+            winner: null, skinsWon: 0, scores: foursomeScores,
+            available, capped: true,
+          });
+        } else {
+          available++;
+          results.push({
+            hole: globalHole, round: r, holeInRound: h,
+            winner: null, skinsWon: 0, scores: foursomeScores,
+            available: available, capped: false,
+          });
+        }
+      }
+    }
+
+    // End of 9: leftover = unclaimed available + held back
+    // (available resets if last hole was won, so check if last result was a win)
+    const lastResult = results[results.length - 1];
+    const unclaimed = lastResult.winner !== null ? 0 : available - 1; // available includes next hole's 1
+    const totalLeftovers = unclaimed + heldBack;
+
+    if (totalLeftovers > 0) {
+      // Award to team with lowest 9-hole total
+      const roundTotals: (number | null)[] = [];
+      for (let f = 0; f < NUM_FOURSOMES; f++) {
+        let total = 0;
+        let complete = true;
+        for (let h2 = 0; h2 < HOLES_PER_ROUND; h2++) {
+          const s = scores[`${r}-${f}-${h2}`];
+          if (s === undefined) { complete = false; break; }
+          total += s;
+        }
+        roundTotals.push(complete ? total : null);
+      }
+
+      const validTotals = roundTotals.filter((t): t is number => t !== null);
+      if (validTotals.length > 0) {
+        const minTotal = Math.min(...validTotals);
+        const winners = roundTotals
+          .map((t, i) => t === minTotal ? i : -1)
+          .filter((i) => i >= 0);
+        roundLeftovers.push({
           round: r,
-          holeInRound: h,
-          winner: null,
-          skinsWon: 0,
-          scores: foursomeScores,
+          leftovers: totalLeftovers,
+          winners,
+          perTeam: totalLeftovers / winners.length,
         });
       }
     }
   }
 
-  return results;
+  return { results, roundLeftovers };
 }
 
 // ── Analytics: cross-tier pairing matrix ──
@@ -196,9 +242,9 @@ export default function Tournament({ isAdmin }: Props) {
     [scores, persistScores]
   );
 
-  const skinResults = useMemo(() => calculateSkins(scores), [scores]);
+  const { results: skinResults, roundLeftovers } = useMemo(() => calculateSkins(scores), [scores]);
 
-  // Skins leaderboard
+  // Skins leaderboard (hole wins + leftover awards)
   const skinsLeaderboard = useMemo(() => {
     const totals = [0, 0, 0, 0];
     for (const result of skinResults) {
@@ -206,8 +252,13 @@ export default function Tournament({ isAdmin }: Props) {
         totals[result.winner] += result.skinsWon;
       }
     }
+    for (const lo of roundLeftovers) {
+      for (const w of lo.winners) {
+        totals[w] += lo.perTeam;
+      }
+    }
     return totals;
-  }, [skinResults]);
+  }, [skinResults, roundLeftovers]);
 
   const totalSkinsAwarded = skinsLeaderboard.reduce((a, b) => a + b, 0);
 
@@ -231,10 +282,18 @@ export default function Tournament({ isAdmin }: Props) {
         totals[player] += result.skinsWon;
       }
     }
+    for (const lo of roundLeftovers) {
+      for (const w of lo.winners) {
+        const foursome = ROTATION[lo.round][w];
+        for (const player of foursome) {
+          totals[player] += lo.perTeam;
+        }
+      }
+    }
     return Object.entries(totals)
       .map(([name, skins]) => ({ name, skins }))
       .sort((a, b) => b.skins - a.skins || a.name.localeCompare(b.name));
-  }, [skinResults]);
+  }, [skinResults, roundLeftovers]);
 
   const pairingMatrix = useMemo(() => buildPairingMatrix(), []);
 
@@ -492,9 +551,11 @@ export default function Tournament({ isAdmin }: Props) {
                   ))}
               </div>
               <div className="tourn-lb-summary">
-                {totalSkinsAwarded} of 27 skins awarded
-                {27 - totalSkinsAwarded > 0 && skinResults.some((r) => r.winner === null && r.scores.every((s) => s !== null)) && (
-                  <> &middot; {skinResults.filter((r) => r.winner === null && r.scores.every((s) => s !== null)).length} carried</>
+                {totalSkinsAwarded} of 27 skins awarded (9 per round)
+                {roundLeftovers.length > 0 && (
+                  <> &middot; Leftovers: {roundLeftovers.map((lo) =>
+                    'R' + (lo.round + 1) + ': ' + lo.leftovers + (lo.winners.length > 1 ? ' (split)' : ' → F' + (lo.winners[0] + 1))
+                  ).join(', ')}</>
                 )}
               </div>
             </div>
@@ -571,8 +632,10 @@ export default function Tournament({ isAdmin }: Props) {
                                 <span className="tourn-skins-won">
                                   F{result.winner + 1} wins {result.skinsWon}
                                 </span>
+                              ) : result.capped ? (
+                                <span className="tourn-skins-capped">Capped (3 max)</span>
                               ) : (
-                                <span className="tourn-skins-carry">Carry</span>
+                                <span className="tourn-skins-carry">Carry → {result.available}</span>
                               )}
                             </td>
                           </tr>
