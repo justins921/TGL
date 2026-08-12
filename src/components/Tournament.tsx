@@ -4,8 +4,8 @@ import { useState, useCallback, useMemo } from 'react';
 const PLAYER_NAMES: Record<string, string> = {
   'A1': 'Jeff B', 'A2': 'Justin S', 'A3': 'Tim M', 'A4': 'John M',
   'B1': 'Joe D', 'B2': 'Mike S', 'B3': 'Lee N', 'B4': 'Tim B',
-  'C1': 'Buddha', 'C2': 'Bryon A', 'C3': 'Mark L', 'C4': 'Kevin F',
-  'D1': 'Terry S', 'D2': 'David L', 'D3': 'Rudy', 'D4': 'Tom K',
+  'C1': 'Buddha', 'C2': 'Mark L', 'C3': 'Bryon A', 'C4': 'Kevin F',
+  'D1': 'David L', 'D2': 'Terry S', 'D3': 'Rudy', 'D4': 'Tom K',
 };
 
 // ── Rotation schedule (fixed) ──
