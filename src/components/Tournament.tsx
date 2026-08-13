@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 // ── Player assignments by tier ──
 const PLAYER_NAMES: Record<string, string> = {
@@ -24,6 +24,8 @@ const NUM_ROUNDS = 3;
 const NUM_FOURSOMES = 4;
 
 type TournamentScores = Record<string, number>;
+// Extra putts stored as "round-foursome-hole-putts" -> count of made birdies (0-4)
+type TournamentPutts = Record<string, number>;
 
 interface SkinResult {
   hole: number; // global hole number 1-27
@@ -31,9 +33,11 @@ interface SkinResult {
   holeInRound: number;
   winner: number | null; // foursome index (0-3) or null if carried
   skinsWon: number; // how many skins won on this hole
-  scores: (number | null)[]; // score for each foursome
+  scores: (number | null)[]; // official score for each foursome
+  putts: (number | null)[]; // extra made putts for each foursome (tie-breaker)
   available: number; // pile available going into this hole
   capped: boolean; // true if skins were held back due to cap
+  wonByPutts: boolean; // true if winner decided by extra putts tie-breaker
 }
 
 // Leftover skins awarded at end of each 9
@@ -49,8 +53,8 @@ interface Props {
 }
 
 // ── Skins calculation (modified rules) ──
-// Each 9 is independent. Pile capped at 3. Leftovers go to lowest 9-hole total.
-function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roundLeftovers: RoundLeftover[] } {
+// Each 9 is independent. Pile capped at 3. Extra putts break ties.
+function calculateSkins(scores: TournamentScores, putts: TournamentPutts): { results: SkinResult[]; roundLeftovers: RoundLeftover[] } {
   const results: SkinResult[] = [];
   const roundLeftovers: RoundLeftover[] = [];
 
@@ -61,10 +65,13 @@ function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roun
     for (let h = 0; h < HOLES_PER_ROUND; h++) {
       const globalHole = r * HOLES_PER_ROUND + h + 1;
       const foursomeScores: (number | null)[] = [];
+      const foursomePutts: (number | null)[] = [];
 
       for (let f = 0; f < NUM_FOURSOMES; f++) {
-        const key = `${r}-${f}-${h}`;
-        foursomeScores.push(scores[key] !== undefined ? scores[key] : null);
+        const scoreKey = `${r}-${f}-${h}`;
+        const puttsKey = `${r}-${f}-${h}-putts`;
+        foursomeScores.push(scores[scoreKey] !== undefined ? scores[scoreKey] : null);
+        foursomePutts.push(putts[puttsKey] !== undefined ? putts[puttsKey] : null);
       }
 
       const validScores = foursomeScores.filter((s): s is number => s !== null);
@@ -72,39 +79,56 @@ function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roun
       if (validScores.length < NUM_FOURSOMES) {
         results.push({
           hole: globalHole, round: r, holeInRound: h,
-          winner: null, skinsWon: 0, scores: foursomeScores,
-          available, capped: false,
+          winner: null, skinsWon: 0, scores: foursomeScores, putts: foursomePutts,
+          available, capped: false, wonByPutts: false,
         });
         continue;
       }
 
       const minScore = Math.min(...validScores);
-      const winnersCount = foursomeScores.filter((s) => s === minScore).length;
+      const tiedIndices = foursomeScores
+        .map((s, i) => s === minScore ? i : -1)
+        .filter((i) => i >= 0);
 
-      if (winnersCount === 1) {
-        const winnerIdx = foursomeScores.indexOf(minScore);
+      let winnerIdx: number | null = null;
+      let wonByPutts = false;
+
+      if (tiedIndices.length === 1) {
+        winnerIdx = tiedIndices[0];
+      } else {
+        // Tie on official score — use extra putts to break
+        const tiedPutts = tiedIndices.map((i) => ({ idx: i, putts: foursomePutts[i] ?? 0 }));
+        const maxPutts = Math.max(...tiedPutts.map((t) => t.putts));
+        const puttWinners = tiedPutts.filter((t) => t.putts === maxPutts);
+        if (puttWinners.length === 1 && maxPutts > 0) {
+          winnerIdx = puttWinners[0].idx;
+          wonByPutts = true;
+        }
+      }
+
+      if (winnerIdx !== null) {
         results.push({
           hole: globalHole, round: r, holeInRound: h,
-          winner: winnerIdx, skinsWon: available, scores: foursomeScores,
-          available, capped: false,
+          winner: winnerIdx, skinsWon: available, scores: foursomeScores, putts: foursomePutts,
+          available, capped: false, wonByPutts,
         });
-        available = 1; // reset after win
+        available = 1;
       } else {
-        // Tie — carry over but cap at 3
+        // Still tied — carry over but cap at 3
         const capped = available >= 3;
         if (capped) {
-          heldBack++; // this hole's skin goes to leftovers
+          heldBack++;
           results.push({
             hole: globalHole, round: r, holeInRound: h,
-            winner: null, skinsWon: 0, scores: foursomeScores,
-            available, capped: true,
+            winner: null, skinsWon: 0, scores: foursomeScores, putts: foursomePutts,
+            available, capped: true, wonByPutts: false,
           });
         } else {
           available++;
           results.push({
             hole: globalHole, round: r, holeInRound: h,
-            winner: null, skinsWon: 0, scores: foursomeScores,
-            available: available, capped: false,
+            winner: null, skinsWon: 0, scores: foursomeScores, putts: foursomePutts,
+            available, capped: false, wonByPutts: false,
           });
         }
       }
@@ -231,6 +255,13 @@ export default function Tournament({ isAdmin }: Props) {
       return {};
     }
   });
+  const [putts, setPutts] = useState<TournamentPutts>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('tgl-tournament-putts') || '{}');
+    } catch {
+      return {};
+    }
+  });
 
   const [activeRound, setActiveRound] = useState(0);
   const [activeSection, setActiveSection] = useState<'schedule' | 'scoring' | 'skins' | 'analytics'>('schedule');
@@ -238,6 +269,11 @@ export default function Tournament({ isAdmin }: Props) {
   const persistScores = useCallback((newScores: TournamentScores) => {
     setScores(newScores);
     localStorage.setItem('tgl-tournament', JSON.stringify(newScores));
+  }, []);
+
+  const persistPutts = useCallback((newPutts: TournamentPutts) => {
+    setPutts(newPutts);
+    localStorage.setItem('tgl-tournament-putts', JSON.stringify(newPutts));
   }, []);
 
   const handleScoreChange = useCallback(
@@ -257,20 +293,40 @@ export default function Tournament({ isAdmin }: Props) {
     [scores, persistScores]
   );
 
+  const handlePuttsChange = useCallback(
+    (round: number, foursome: number, hole: number, value: string) => {
+      const key = `${round}-${foursome}-${hole}-putts`;
+      const newPutts = { ...putts };
+      if (value === '') {
+        delete newPutts[key];
+      } else {
+        const num = parseInt(value);
+        if (!isNaN(num) && num >= 0 && num <= 4) {
+          newPutts[key] = num;
+        }
+      }
+      persistPutts(newPutts);
+    },
+    [putts, persistPutts]
+  );
+
   const handleClearRound = useCallback(
     (round: number) => {
       const newScores = { ...scores };
+      const newPutts = { ...putts };
       for (let f = 0; f < NUM_FOURSOMES; f++) {
         for (let h = 0; h < HOLES_PER_ROUND; h++) {
           delete newScores[`${round}-${f}-${h}`];
+          delete newPutts[`${round}-${f}-${h}-putts`];
         }
       }
       persistScores(newScores);
+      persistPutts(newPutts);
     },
-    [scores, persistScores]
+    [scores, putts, persistScores, persistPutts]
   );
 
-  const { results: skinResults, roundLeftovers } = useMemo(() => calculateSkins(scores), [scores]);
+  const { results: skinResults, roundLeftovers } = useMemo(() => calculateSkins(scores, putts), [scores, putts]);
 
   // Skins leaderboard (hole wins + leftover awards)
   const skinsLeaderboard = useMemo(() => {
@@ -509,32 +565,53 @@ export default function Tournament({ isAdmin }: Props) {
                         }
                       }
                       return (
-                        <tr key={fIdx}>
-                          <td className="tourn-scoring-label">
-                            <span className="tourn-scoring-fname">F{fIdx + 1}</span>
-                            <span className="tourn-scoring-fplayers">
-                              {foursome.join(', ')}
-                            </span>
-                          </td>
-                          {Array.from({ length: HOLES_PER_ROUND }, (_, h) => {
-                            const key = `${activeRound}-${fIdx}-${h}`;
-                            return (
-                              <td key={h}>
-                                <input
-                                  className="tourn-score-input"
-                                  type="number"
-                                  min={1}
-                                  max={20}
-                                  value={scores[key] !== undefined ? scores[key] : ''}
-                                  onChange={(e) => handleScoreChange(activeRound, fIdx, h, e.target.value)}
-                                />
-                              </td>
-                            );
-                          })}
-                          <td className="tourn-scoring-total">
-                            {allComplete ? total : '-'}
-                          </td>
-                        </tr>
+                        <React.Fragment key={fIdx}>
+                          <tr>
+                            <td className="tourn-scoring-label" rowSpan={2}>
+                              <span className="tourn-scoring-fname">F{fIdx + 1}</span>
+                              <span className="tourn-scoring-fplayers">
+                                {foursome.map((p) => PLAYER_NAMES[p] || p).join(', ')}
+                              </span>
+                            </td>
+                            {Array.from({ length: HOLES_PER_ROUND }, (_, h) => {
+                              const key = `${activeRound}-${fIdx}-${h}`;
+                              return (
+                                <td key={h}>
+                                  <input
+                                    className="tourn-score-input"
+                                    type="number"
+                                    min={1}
+                                    max={20}
+                                    value={scores[key] !== undefined ? scores[key] : ''}
+                                    onChange={(e) => handleScoreChange(activeRound, fIdx, h, e.target.value)}
+                                  />
+                                </td>
+                              );
+                            })}
+                            <td className="tourn-scoring-total">
+                              {allComplete ? total : '-'}
+                            </td>
+                          </tr>
+                          <tr className="tourn-putts-row">
+                            {Array.from({ length: HOLES_PER_ROUND }, (_, h) => {
+                              const puttsKey = `${activeRound}-${fIdx}-${h}-putts`;
+                              return (
+                                <td key={h}>
+                                  <input
+                                    className="tourn-putts-input"
+                                    type="number"
+                                    min={0}
+                                    max={4}
+                                    placeholder="🏌"
+                                    value={putts[puttsKey] !== undefined ? putts[puttsKey] : ''}
+                                    onChange={(e) => handlePuttsChange(activeRound, fIdx, h, e.target.value)}
+                                  />
+                                </td>
+                              );
+                            })}
+                            <td></td>
+                          </tr>
+                        </React.Fragment>
                       );
                     })}
                   </tbody>
@@ -658,7 +735,7 @@ export default function Tournament({ isAdmin }: Props) {
                                 <span className="tourn-skins-pending">--</span>
                               ) : result.winner !== null ? (
                                 <span className="tourn-skins-won">
-                                  F{result.winner + 1} wins {result.skinsWon}
+                                  F{result.winner + 1} wins {result.skinsWon}{result.wonByPutts ? ' (putts)' : ''}
                                 </span>
                               ) : result.capped ? (
                                 <span className="tourn-skins-capped">Capped (3 max)</span>

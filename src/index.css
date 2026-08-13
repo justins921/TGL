@@ -2875,6 +2875,38 @@ input, select {
   margin: 0;
 }
 
+.tourn-putts-row td {
+  padding-top: 0 !important;
+  padding-bottom: 8px !important;
+}
+
+.tourn-putts-input {
+  width: 36px;
+  padding: 2px 2px;
+  border: 1.5px solid #e8d5f5;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  background: #faf5ff;
+  color: #7c3aed;
+  transition: border-color 0.2s;
+}
+.tourn-putts-input:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+.tourn-putts-input::placeholder {
+  color: #c4b5fd;
+  font-size: 14px;
+}
+.tourn-putts-input::-webkit-inner-spin-button,
+.tourn-putts-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .tourn-score-input[type='number'] {
   -moz-appearance: textfield;
 }
