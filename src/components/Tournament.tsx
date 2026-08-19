@@ -74,16 +74,16 @@ function calculateSkins(scores: TournamentScores): SkinResult[] {
       const winnersCount = foursomeScores.filter((s) => s === minScore).length;
 
       if (winnersCount === 1) {
-        // Sole winner — gets the available pile + any held back excess
+        // Sole winner gets the current pile (max 3)
+        // Excess rolls into the next pile start
         const winnerIdx = foursomeScores.indexOf(minScore);
-        const totalWon = available + heldBack;
-        heldBack = 0;
         results.push({
           hole: globalHole, round: r, holeInRound: h,
-          winner: winnerIdx, skinsWon: totalWon, scores: foursomeScores,
+          winner: winnerIdx, skinsWon: available, scores: foursomeScores,
           available, capped: false,
         });
-        available = 1;
+        available = 1 + heldBack; // excess starts next pile
+        heldBack = 0;
       } else {
         // Tie — carry over but cap at 3
         if (available >= 3) {
@@ -180,7 +180,7 @@ export default function Tournament({ isAdmin }: Props) {
         delete newScores[key];
       } else {
         const num = parseInt(value);
-        if (!isNaN(num) && num > 0 && num <= 20) {
+        if (!isNaN(num) && num >= -5 && num <= 20) {
           newScores[key] = num;
         }
       }
@@ -443,7 +443,7 @@ export default function Tournament({ isAdmin }: Props) {
                                   <input
                                     className="tourn-score-input"
                                     type="number"
-                                    min={1}
+                                    min={-5}
                                     max={20}
                                     value={scores[key] !== undefined ? scores[key] : ''}
                                     onChange={(e) => handleScoreChange(activeRound, fIdx, h, e.target.value)}
