@@ -36,13 +36,6 @@ interface SkinResult {
   capped: boolean; // true if skins were held back due to cap
 }
 
-// Leftover skins awarded at end of each 9
-interface RoundLeftover {
-  round: number;
-  leftovers: number;
-  winners: number[]; // foursome indices that split leftovers
-  perTeam: number;
-}
 
 interface Props {
   isAdmin: boolean;
@@ -50,9 +43,8 @@ interface Props {
 
 // ── Skins calculation ──
 // Each 9 is independent. Carry capped at 3, excess added immediately.
-function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roundLeftovers: RoundLeftover[] } {
+function calculateSkins(scores: TournamentScores): SkinResult[] {
   const results: SkinResult[] = [];
-  const roundLeftovers: RoundLeftover[] = [];
   let available = 1;
   let heldBack = 0;
 
@@ -115,7 +107,7 @@ function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roun
     // No reset between rounds — skins carry across all 27 holes
   }
 
-  return { results, roundLeftovers };
+  return results;
 }
 
 // ── Analytics: cross-tier pairing matrix ──
@@ -210,7 +202,7 @@ export default function Tournament({ isAdmin }: Props) {
     [scores, persistScores]
   );
 
-  const { results: skinResults, roundLeftovers } = useMemo(() => calculateSkins(scores), [scores]);
+  const skinResults = useMemo(() => calculateSkins(scores), [scores]);
 
   // Skins leaderboard (hole wins + leftover awards)
   const skinsLeaderboard = useMemo(() => {
@@ -220,13 +212,8 @@ export default function Tournament({ isAdmin }: Props) {
         totals[result.winner] += result.skinsWon;
       }
     }
-    for (const lo of roundLeftovers) {
-      for (const w of lo.winners) {
-        totals[w] += lo.perTeam;
-      }
-    }
     return totals;
-  }, [skinResults, roundLeftovers]);
+  }, [skinResults]);
 
   const totalSkinsAwarded = skinsLeaderboard.reduce((a, b) => a + b, 0);
 
@@ -250,18 +237,10 @@ export default function Tournament({ isAdmin }: Props) {
         totals[player] += result.skinsWon;
       }
     }
-    for (const lo of roundLeftovers) {
-      for (const w of lo.winners) {
-        const foursome = ROTATION[lo.round][w];
-        for (const player of foursome) {
-          totals[player] += lo.perTeam;
-        }
-      }
-    }
     return Object.entries(totals)
       .map(([name, skins]) => ({ name, skins }))
       .sort((a, b) => b.skins - a.skins || a.name.localeCompare(b.name));
-  }, [skinResults, roundLeftovers]);
+  }, [skinResults]);
 
   const pairingMatrix = useMemo(() => buildPairingMatrix(), []);
 
