@@ -53,10 +53,10 @@ interface Props {
 function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roundLeftovers: RoundLeftover[] } {
   const results: SkinResult[] = [];
   const roundLeftovers: RoundLeftover[] = [];
+  let available = 1;
+  let heldBack = 0;
 
   for (let r = 0; r < NUM_ROUNDS; r++) {
-    let available = 1; // pile starts at 1 each hole
-    let heldBack = 0; // skins held back due to cap
 
     for (let h = 0; h < HOLES_PER_ROUND; h++) {
       const globalHole = r * HOLES_PER_ROUND + h + 1;
@@ -112,68 +112,7 @@ function calculateSkins(scores: TournamentScores): { results: SkinResult[]; roun
       }
     }
 
-    // End of 9: leftover = unclaimed available + held back
-    // (available resets if last hole was won, so check if last result was a win)
-    const lastResult = results[results.length - 1];
-    const unclaimed = lastResult.winner !== null ? 0 : available - 1; // available includes next hole's 1
-    const totalLeftovers = unclaimed + heldBack;
-
-    if (totalLeftovers > 0) {
-      // Award leftovers based on lowest 9-hole total
-      const roundTotals: (number | null)[] = [];
-      for (let f = 0; f < NUM_FOURSOMES; f++) {
-        let total = 0;
-        let complete = true;
-        for (let h2 = 0; h2 < HOLES_PER_ROUND; h2++) {
-          const s = scores[`${r}-${f}-${h2}`];
-          if (s === undefined) { complete = false; break; }
-          total += s;
-        }
-        roundTotals.push(complete ? total : null);
-      }
-
-      const validTotals = roundTotals.filter((t): t is number => t !== null);
-      if (validTotals.length > 0) {
-        const minTotal = Math.min(...validTotals);
-        const lowTeams = roundTotals
-          .map((t, i) => t === minTotal ? i : -1)
-          .filter((i) => i >= 0);
-        const allTeams = roundTotals
-          .map((t, i) => t !== null ? i : -1)
-          .filter((i) => i >= 0);
-
-        if (lowTeams.length > 1) {
-          // Tied for lowest: split ALL leftovers evenly among all teams
-          roundLeftovers.push({
-            round: r,
-            leftovers: totalLeftovers,
-            winners: allTeams,
-            perTeam: totalLeftovers / allTeams.length,
-          });
-        } else {
-          // Sole lowest team gets up to 3, remainder split among all teams
-          const toWinner = Math.min(3, totalLeftovers);
-          const remainder = totalLeftovers - toWinner;
-
-          if (toWinner > 0) {
-            roundLeftovers.push({
-              round: r,
-              leftovers: toWinner,
-              winners: lowTeams,
-              perTeam: toWinner,
-            });
-          }
-          if (remainder > 0) {
-            roundLeftovers.push({
-              round: r,
-              leftovers: remainder,
-              winners: allTeams,
-              perTeam: remainder / allTeams.length,
-            });
-          }
-        }
-      }
-    }
+    // No reset between rounds — skins carry across all 27 holes
   }
 
   return { results, roundLeftovers };
@@ -582,11 +521,9 @@ export default function Tournament({ isAdmin }: Props) {
                   ))}
               </div>
               <div className="tourn-lb-summary">
-                {totalSkinsAwarded} of 27 skins awarded (9 per round)
-                {roundLeftovers.length > 0 && (
-                  <> &middot; Leftovers: {roundLeftovers.map((lo) =>
-                    'R' + (lo.round + 1) + ': ' + lo.leftovers + (lo.winners.length > 1 ? ' (split)' : ' → F' + (lo.winners[0] + 1))
-                  ).join(', ')}</>
+                {totalSkinsAwarded} of 27 skins awarded
+                {skinResults.some((r) => r.winner === null && r.scores.every((s) => s !== null)) && (
+                  <> &middot; {skinResults.filter((r) => r.winner === null && r.scores.every((s) => s !== null)).length} in carry</>
                 )}
               </div>
             </div>
