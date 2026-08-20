@@ -15,6 +15,7 @@ interface WeekFinance {
   fiftyFiftyAmount: number;
   hotHole: number | null;
   hotHoleWinner: string;
+  hotHoleScores: Record<string, number[]>; // foursome label -> array of player scores
   fines: Record<string, number>;
   payments: Record<string, { front9: boolean; back9: boolean; fiftyFifty: boolean; hotHole: boolean }>;
 }
@@ -59,6 +60,7 @@ function emptyWeek(weekLabel: string): WeekFinance {
     fiftyFiftyAmount: 0,
     hotHole: null,
     hotHoleWinner: '',
+    hotHoleScores: {},
     fines: {},
     payments: {},
   };
@@ -479,8 +481,8 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
               <div className="card">
                 <div className="card-title" style={{ fontSize: 14 }}>Hot Hole ($1/player)</div>
                 {isAdmin ? (
-                  <div className="fin-form-grid">
-                    <div className="fin-field">
+                  <>
+                    <div className="fin-field" style={{ marginBottom: 10 }}>
                       <label>Hole Number</label>
                       <select
                         className="avail-select"
@@ -493,26 +495,98 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
                         ))}
                       </select>
                     </div>
-                    <div className="fin-field">
-                      <label>Winning Team</label>
-                      <select
-                        className="avail-select"
-                        value={selectedWeek.hotHoleWinner}
-                        onChange={(e) => updateWeek(selectedWeek.id, { hotHoleWinner: e.target.value })}
-                      >
-                        <option value="">Select...</option>
-                        {['F1', 'F2', 'F3', 'F4'].map((o) => (
-                          <option key={o} value={o}>{o}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+                    {selectedWeek.hotHole && (
+                      <div className="fin-hothole-scoring">
+                        <div className="fin-hothole-label">Enter each player's score on Hole {selectedWeek.hotHole}:</div>
+                        {['F1','F2','F3','F4'].map((fLabel) => {
+                          const scores = selectedWeek.hotHoleScores[fLabel] || [];
+                          const minPlayers = Math.min(
+                            ...[
+                              selectedWeek.hotHoleScores['F1']?.filter((s) => s > 0).length || 0,
+                              selectedWeek.hotHoleScores['F2']?.filter((s) => s > 0).length || 0,
+                              selectedWeek.hotHoleScores['F3']?.filter((s) => s > 0).length || 0,
+                              selectedWeek.hotHoleScores['F4']?.filter((s) => s > 0).length || 0,
+                            ].filter((n) => n > 0)
+                          );
+                          const validScores = scores.filter((s) => s > 0).sort((a,b) => a - b);
+                          const useCount = minPlayers > 0 && minPlayers < 4 ? minPlayers : validScores.length;
+                          const total = validScores.slice(0, useCount).reduce((a,b) => a + b, 0);
+                          return (
+                            <div key={fLabel} className="fin-hothole-team">
+                              <span className="fin-hothole-fname">{fLabel}</span>
+                              <div className="fin-hothole-inputs">
+                                {[0,1,2,3].map((i) => (
+                                  <input
+                                    key={i}
+                                    className="tourn-score-input"
+                                    type="number"
+                                    min={0}
+                                    max={20}
+                                    placeholder={(i+1).toString()}
+                                    value={scores[i] || ''}
+                                    onChange={(e) => {
+                                      const newScores = [...scores];
+                                      while (newScores.length <= i) newScores.push(0);
+                                      newScores[i] = parseInt(e.target.value) || 0;
+                                      updateWeek(selectedWeek.id, {
+                                        hotHoleScores: { ...selectedWeek.hotHoleScores, [fLabel]: newScores },
+                                      });
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                              <span className="fin-hothole-total">
+                                {total > 0 ? total + (useCount < validScores.length ? ` (best ${useCount})` : '') : '-'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {(() => {
+                          const teamTotals = ['F1','F2','F3','F4'].map((fLabel) => {
+                            const scores = selectedWeek.hotHoleScores[fLabel] || [];
+                            const allValid = [
+                              (selectedWeek.hotHoleScores['F1'] || []).filter((s) => s > 0).length,
+                              (selectedWeek.hotHoleScores['F2'] || []).filter((s) => s > 0).length,
+                              (selectedWeek.hotHoleScores['F3'] || []).filter((s) => s > 0).length,
+                              (selectedWeek.hotHoleScores['F4'] || []).filter((s) => s > 0).length,
+                            ].filter((n) => n > 0);
+                            const minP = allValid.length > 0 ? Math.min(...allValid) : 0;
+                            const valid = scores.filter((s) => s > 0).sort((a,b) => a - b);
+                            const useN = minP > 0 && minP < 4 ? minP : valid.length;
+                            return { label: fLabel, total: valid.slice(0, useN).reduce((a,b) => a + b, 0), hasScores: valid.length > 0 };
+                          });
+                          const scored = teamTotals.filter((t) => t.hasScores);
+                          if (scored.length === 0) return null;
+                          const minTotal = Math.min(...scored.map((t) => t.total));
+                          const winners = scored.filter((t) => t.total === minTotal);
+                          const winnerText = winners.length === 1 ? `${winners[0].label} wins! (${minTotal})` : `Tie: ${winners.map((w) => w.label).join(', ')} (${minTotal})`;
+                          return <div className="fin-hothole-result">{winnerText}</div>;
+                        })()}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <>
                     <div className="fin-readonly-row">
                       <span className="fin-readonly-label">Hole:</span>
                       <span>{selectedWeek.hotHole ? `Hole ${selectedWeek.hotHole}` : '-'}</span>
                     </div>
+                    {selectedWeek.hotHole && Object.keys(selectedWeek.hotHoleScores || {}).length > 0 && (
+                      <div className="fin-hothole-scoring">
+                        {['F1','F2','F3','F4'].map((fLabel) => {
+                          const scores = (selectedWeek.hotHoleScores || {})[fLabel] || [];
+                          const valid = scores.filter((s) => s > 0);
+                          const total = valid.reduce((a,b) => a + b, 0);
+                          if (valid.length === 0) return null;
+                          return (
+                            <div key={fLabel} className="fin-hothole-team">
+                              <span className="fin-hothole-fname">{fLabel}</span>
+                              <span className="fin-hothole-total">{valid.join(' + ')} = {total}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                     <div className="fin-readonly-row">
                       <span className="fin-readonly-label">Winner:</span>
                       <span>{selectedWeek.hotHoleWinner || '-'}</span>
