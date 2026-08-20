@@ -4007,6 +4007,213 @@ input, select {
 }
 
 /* ══════════════════════════════════════ */
+/* ── Spin Wheel ── */
+/* ══════════════════════════════════════ */
+
+.spin-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.spin-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.spin-wheel-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  padding-top: 18px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+}
+
+.spin-pointer {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+}
+
+.spin-wheel-rotator {
+  width: 100%;
+  border-radius: 50%;
+  transition: transform 4s cubic-bezier(0.0, 0.70, 0.10, 1.00);
+}
+
+.spin-wheel-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.spin-btn {
+  background: linear-gradient(135deg, var(--green-800), var(--green-700));
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.spin-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--green-700), var(--green-600));
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+.spin-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow);
+}
+
+.spin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spin-result {
+  background: var(--green-50);
+  border: 2px solid var(--green-100);
+  border-radius: var(--radius);
+  padding: 14px 24px;
+  text-align: center;
+  width: 100%;
+  max-width: 280px;
+  animation: spin-result-pop 0.3s ease;
+}
+
+.spin-result-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--green-800);
+  letter-spacing: -0.02em;
+}
+
+@keyframes spin-result-pop {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.spin-empty {
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.spin-detail-result {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--green-800);
+  padding: 12px;
+  margin-top: 12px;
+  background: var(--green-50);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--green-100);
+  animation: spin-result-pop 0.3s ease;
+}
+
+.spin-winner {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* Player filter for 50/50 wheel */
+.spin-player-filter {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.spin-filter-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.spin-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.spin-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.spin-filter-item:has(input:checked) {
+  background: var(--green-50);
+  border-color: var(--green-100);
+  color: var(--green-800);
+}
+
+.spin-filter-item:has(input:not(:checked)) {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.spin-filter-item input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--green-700);
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .spin-wheel-wrapper {
+    max-width: 240px;
+  }
+  .spin-result {
+    max-width: 240px;
+  }
+  .spin-btn {
+    padding: 12px 32px;
+    font-size: 15px;
+  }
+  .spin-filter-item {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
+/* ══════════════════════════════════════ */
 /* ── Print Styles ── */
 /* ══════════════════════════════════════ */
 @media print {
@@ -4025,7 +4232,10 @@ input, select {
   .sub-selector-dropdown,
   .match-sub-selectors,
   .sc-score-input,
-  .sc-empty-hint {
+  .sc-empty-hint,
+  .spin-container,
+  .spin-player-filter,
+  .spin-detail-result {
     display: none !important;
   }
 

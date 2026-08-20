@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { PlayerProfile, ScheduleData } from '../lib/types';
+import SpinWheel from './SpinWheel';
 
 // ── Data types ──
 
@@ -63,7 +64,12 @@ function emptyWeek(weekLabel: string): WeekFinance {
   };
 }
 
-type Section = 'entry' | 'summary' | 'checklist';
+const HOT_HOLE_SEGMENTS = [
+  '1 & 10', '2 & 11', '3 & 12', '4 & 13', '5 & 14',
+  '6 & 15', '7 & 16', '8 & 17', '9 & 18',
+];
+
+type Section = 'entry' | 'summary' | 'checklist' | 'randomizers';
 
 export default function Finances({ isAdmin, players, scheduleData: _scheduleData }: Props) {
   const [data, setData] = useState<FinancesData>(loadFinances);
@@ -72,6 +78,9 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
     () => data.weeks.length > 0 ? data.weeks[data.weeks.length - 1].id : null
   );
   const [justSaved, setJustSaved] = useState(false);
+  const [excludedPlayers, setExcludedPlayers] = useState<Set<string>>(new Set());
+  const [hotHoleResult, setHotHoleResult] = useState<string | null>(null);
+  const [fiftyFiftyResult, setFiftyFiftyResult] = useState<string | null>(null);
 
   // Derive player name list
   const playerNames = useMemo(() => {
@@ -80,6 +89,11 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((p) => p.name);
   }, [players]);
+
+  // Players available for 50/50 wheel
+  const fiftyFiftyPlayers = useMemo(() => {
+    return playerNames.filter((n) => !excludedPlayers.has(n));
+  }, [playerNames, excludedPlayers]);
 
   // Derive foursome options from schedule data
   const foursomeOptions = useMemo(() => {
@@ -204,6 +218,7 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
     { id: 'entry', label: 'Weekly Entry' },
     { id: 'summary', label: 'Summary' },
     { id: 'checklist', label: 'Payments' },
+    { id: 'randomizers', label: 'Randomizers' },
   ];
 
   return (
@@ -768,6 +783,63 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
               <p>Select a week to view the payment checklist</p>
             </div>
           )}
+        </>
+      )}
+
+      {/* ════════════════ Randomizers ════════════════ */}
+      {activeSection === 'randomizers' && (
+        <>
+          {/* Hot Hole Wheel */}
+          <div className="card">
+            <SpinWheel
+              title="Hot Hole"
+              segments={HOT_HOLE_SEGMENTS}
+              onResult={(seg) => {
+                const [front, back] = seg.split(' & ');
+                setHotHoleResult(`Front 9: Hole ${front} / Back 9: Hole ${back}`);
+              }}
+            />
+            {hotHoleResult && (
+              <div className="spin-detail-result">{hotHoleResult}</div>
+            )}
+          </div>
+
+          {/* 50/50 Wheel */}
+          <div className="card">
+            <div className="spin-player-filter">
+              <div className="spin-filter-title">Players in the draw:</div>
+              <div className="spin-filter-list">
+                {playerNames.map((name) => (
+                  <label key={name} className="spin-filter-item">
+                    <input
+                      type="checkbox"
+                      checked={!excludedPlayers.has(name)}
+                      onChange={() => {
+                        setExcludedPlayers((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(name)) next.delete(name);
+                          else next.add(name);
+                          return next;
+                        });
+                        setFiftyFiftyResult(null);
+                      }}
+                    />
+                    <span>{name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <SpinWheel
+              title="50/50 Draw"
+              segments={fiftyFiftyPlayers}
+              onResult={(seg) => setFiftyFiftyResult(seg)}
+            />
+            {fiftyFiftyResult && (
+              <div className="spin-detail-result spin-winner">
+                Winner: {fiftyFiftyResult}
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
