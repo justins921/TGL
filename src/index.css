@@ -3475,6 +3475,538 @@ input, select {
 }
 
 /* ══════════════════════════════════════ */
+/* ── Finances ── */
+/* ══════════════════════════════════════ */
+
+.fin-week-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fin-week-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.fin-add-week-btn {
+  flex: 1;
+  background: linear-gradient(135deg, var(--green-800), var(--green-700));
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.fin-add-week-btn:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.fin-delete-week-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.fin-delete-week-btn:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-light);
+}
+
+.fin-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fin-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fin-input {
+  width: 100%;
+  padding: 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.fin-input:focus {
+  outline: none;
+  border-color: var(--green-700);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+}
+
+.fin-input::-webkit-inner-spin-button,
+.fin-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.fin-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.fin-combo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fin-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 10px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.fin-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.fin-toggle-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green-700);
+}
+
+.fin-dollar-input {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.fin-dollar-sign {
+  position: absolute;
+  left: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.fin-dollar-input .fin-input {
+  padding-left: 24px;
+}
+
+.fin-dollar-sm {
+  max-width: 100px;
+}
+
+.fin-readonly-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.fin-readonly-row:last-child {
+  border-bottom: none;
+}
+
+.fin-readonly-label {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Fines list */
+.fin-fines-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.fin-fine-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.fin-fine-row:last-child {
+  border-bottom: none;
+}
+
+.fin-fine-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.fin-fine-input {
+  width: 70px !important;
+  text-align: center;
+  font-size: 14px !important;
+  padding: 6px 6px 6px 20px !important;
+}
+
+.fin-fine-amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 60px;
+  text-align: right;
+}
+
+.fin-fine-amount.has-fine {
+  color: var(--orange-text);
+  font-weight: 700;
+}
+
+/* Fines stat accent */
+.fin-stat-fines {
+  background: var(--orange-bg);
+  border-color: #ffe0b2;
+}
+
+.fin-fines-value {
+  color: var(--orange-text) !important;
+}
+
+/* Summary - Fines Leaderboard */
+.fin-lb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.fin-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.fin-lb-row:last-child {
+  border-bottom: none;
+}
+
+.fin-lb-row.leader {
+  background: var(--orange-bg);
+  margin: 0 -20px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+}
+
+.fin-lb-rank {
+  width: 28px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--muted);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.fin-lb-row.leader .fin-lb-rank {
+  color: var(--orange-text);
+}
+
+.fin-lb-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fin-lb-amount {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--orange-text);
+  min-width: 50px;
+  text-align: right;
+}
+
+/* Summary - Wins */
+.fin-wins-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.fin-wins-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.fin-wins-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green-800);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--green-100);
+  margin-bottom: 4px;
+}
+
+.fin-wins-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.fin-wins-row:last-child {
+  border-bottom: none;
+}
+
+.fin-wins-team {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fin-wins-count {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--green-800);
+}
+
+/* Summary - 50/50 History */
+.fin-fifty-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.fin-fifty-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.fin-fifty-row:last-child {
+  border-bottom: none;
+}
+
+.fin-fifty-week {
+  flex: 1;
+  min-width: 0;
+}
+
+.fin-fifty-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fin-fifty-date {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.fin-fifty-winner {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green-800);
+  flex-shrink: 0;
+}
+
+.fin-fifty-amount {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--green-800);
+  min-width: 50px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.fin-empty-hint {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  padding: 12px 0;
+}
+
+/* Payment Checklist */
+.fin-checklist-card {
+  padding: 16px;
+}
+
+.fin-checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.fin-print-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.fin-print-btn:hover {
+  border-color: var(--green-700);
+  color: var(--green-800);
+  background: var(--green-50);
+}
+
+.fin-checklist-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fin-checklist-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+  font-size: 13px;
+}
+
+.fin-checklist-table thead th {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface);
+  vertical-align: bottom;
+}
+
+.fin-cl-name-col {
+  text-align: left !important;
+  min-width: 100px;
+  padding-left: 8px !important;
+}
+
+.fin-cl-col {
+  width: 60px;
+  min-width: 60px;
+}
+
+.fin-cl-amount {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  display: block;
+}
+
+.fin-checklist-table tbody td {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.fin-cl-name {
+  text-align: left !important;
+  padding-left: 8px !important;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fin-cl-check {
+  text-align: center;
+}
+
+.fin-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--green-700);
+  cursor: pointer;
+}
+
+.fin-paid {
+  color: var(--green-700);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.fin-unpaid {
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.fin-na {
+  color: var(--muted);
+}
+
+.fin-cl-fine {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.fin-cl-fine.has-fine {
+  color: var(--orange-text);
+  font-weight: 700;
+}
+
+.fin-cl-total {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .fin-wins-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .fin-checklist-table {
+    min-width: 420px;
+  }
+  .fin-lb-row.leader {
+    margin: 0 -12px;
+    padding: 10px 12px;
+  }
+}
+
+/* ══════════════════════════════════════ */
 /* ── Print Styles ── */
 /* ══════════════════════════════════════ */
 @media print {
@@ -3643,5 +4175,39 @@ input, select {
   .bye-tag {
     font-size: 10px;
     padding: 2px 6px;
+  }
+
+  /* Finances checklist print */
+  .fin-print-btn,
+  .fin-week-selector,
+  .tourn-section-tabs,
+  .fin-week-actions {
+    display: none !important;
+  }
+
+  .fin-checklist-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .fin-checklist-table {
+    min-width: 0;
+  }
+
+  .fin-checklist-table thead th {
+    background: #f5f5f5;
+    font-size: 10px;
+    padding: 6px 4px;
+  }
+
+  .fin-checklist-table tbody td {
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+
+  .fin-checkbox {
+    width: 16px;
+    height: 16px;
   }
 }

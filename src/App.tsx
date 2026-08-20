@@ -96,8 +96,9 @@ import Availability from './components/Availability';
 import type { AbsenceEntry } from './components/Availability';
 import AdminLogin from './components/AdminLogin';
 import Tournament from './components/Tournament';
+import Finances from './components/Finances';
 
-type Tab = 'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players' | 'availability' | 'tournament';
+type Tab = 'schedule' | 'leaderboard' | 'analytics' | 'compare' | 'players' | 'availability' | 'tournament' | 'finances';
 
 const ALL_TABS: { id: Tab; label: string; icon: string; adminOnly: boolean }[] = [
   { id: 'schedule', label: 'Schedule', icon: '\u{1F4C5}', adminOnly: false },
@@ -105,6 +106,7 @@ const ALL_TABS: { id: Tab; label: string; icon: string; adminOnly: boolean }[] =
   { id: 'tournament', label: 'Tournament', icon: '\u{1F3CC}', adminOnly: false },
   { id: 'players', label: 'Players', icon: '\u{1F464}', adminOnly: false },
   { id: 'availability', label: 'Availability', icon: '\u{1F4C6}', adminOnly: false },
+  { id: 'finances', label: 'Finances', icon: '\u{1F4B0}', adminOnly: false },
   { id: 'analytics', label: 'Analytics', icon: '\u{1F4CA}', adminOnly: false },
   { id: 'compare', label: 'Compare', icon: '\u2696', adminOnly: true },
 ];
@@ -360,6 +362,12 @@ function AppContent() {
         />
       ) : activeTab === 'tournament' ? (
         <Tournament isAdmin={isAdmin} />
+      ) : activeTab === 'finances' ? (
+        <Finances
+          isAdmin={isAdmin}
+          players={players}
+          scheduleData={scheduleData}
+        />
       ) : activeTab === 'analytics' ? (
         <Analytics scheduleData={scheduleData} />
       ) : (
