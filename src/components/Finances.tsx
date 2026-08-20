@@ -65,8 +65,8 @@ function emptyWeek(weekLabel: string): WeekFinance {
 }
 
 const HOT_HOLE_SEGMENTS = [
-  '1 & 10', '2 & 11', '3 & 12', '4 & 13', '5 & 14',
-  '6 & 15', '7 & 16', '8 & 17', '9 & 18',
+  '1 or 10', '2 or 11', '3 or 12', '4 or 13', '5 or 14',
+  '6 or 15', '7 or 16', '8 or 17', '9 or 18',
 ];
 
 type Section = 'entry' | 'summary' | 'checklist' | 'randomizers';
@@ -822,8 +822,8 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
               title="Hot Hole"
               segments={HOT_HOLE_SEGMENTS}
               onResult={(seg) => {
-                const [front, back] = seg.split(' & ');
-                setHotHoleResult(`Front 9: Hole ${front} / Back 9: Hole ${back}`);
+                const [front, back] = seg.split(' or ');
+                setHotHoleResult(`Hole ${front} or Hole ${back}`);
               }}
             />
             {hotHoleResult && (
