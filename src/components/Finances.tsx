@@ -736,129 +736,108 @@ export default function Finances({ isAdmin, players, scheduleData }: Props) {
       {/* ════════════════ Payment Checklist ════════════════ */}
       {activeSection === 'checklist' && (
         <>
-          {/* Week selector for checklist */}
-          <div className="card">
-            <div className="fin-week-selector">
-              <select
-                className="avail-select"
-                value={selectedWeekId || ''}
-                onChange={(e) => setSelectedWeekId(e.target.value || null)}
-              >
-                <option value="">Select a week...</option>
-                {data.weeks.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.weekLabel} - {formatDate(w.date)}
-                  </option>
-                ))}
-              </select>
+          <div className="card fin-checklist-card">
+            <div className="fin-checklist-header">
+              <div className="card-title" style={{ fontSize: 14, marginBottom: 0 }}>
+                Payment Checklist
+              </div>
+              <button className="fin-print-btn no-print" onClick={() => window.print()}>
+                Print
+              </button>
+            </div>
+            <div className="fin-checklist-scroll">
+              <table className="fin-checklist-table">
+                <thead>
+                  <tr>
+                    <th className="fin-cl-name-col">Player</th>
+                    <th className="fin-cl-col">Front 9<br /><span className="fin-cl-amount">$5</span></th>
+                    <th className="fin-cl-col">Back 9<br /><span className="fin-cl-amount">$5</span></th>
+                    <th className="fin-cl-col">50/50<br /><span className="fin-cl-amount">$10</span></th>
+                    <th className="fin-cl-col">Hot Hole<br /><span className="fin-cl-amount">$1</span></th>
+                    <th className="fin-cl-col">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {playerNames.map((name) => (
+                    <tr key={name}>
+                      <td className="fin-cl-name">{name}</td>
+                      <td className="fin-cl-check"><span className="fin-checkbox-print">&#9744;</span></td>
+                      <td className="fin-cl-check"><span className="fin-checkbox-print">&#9744;</span></td>
+                      <td className="fin-cl-check"><span className="fin-checkbox-print">&#9744;</span></td>
+                      <td className="fin-cl-check"><span className="fin-checkbox-print">&#9744;</span></td>
+                      <td className="fin-cl-total">$21</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {selectedWeek ? (
-            <>
-              <div className="card fin-checklist-card">
-                <div className="fin-checklist-header">
-                  <div className="card-title" style={{ fontSize: 14, marginBottom: 0 }}>
-                    {selectedWeek.weekLabel} - {formatDate(selectedWeek.date)}
-                  </div>
-                  <button className="fin-print-btn no-print" onClick={() => window.print()}>
-                    Print
-                  </button>
-                </div>
-                <div className="fin-checklist-scroll">
+          {/* Week-specific tracking (admin) */}
+          {isAdmin && data.weeks.length > 0 && (
+            <div className="card no-print">
+              <div className="card-title" style={{ fontSize: 14 }}>Week-Specific Tracking</div>
+              <div className="fin-week-selector">
+                <select
+                  className="avail-select"
+                  value={selectedWeekId || ''}
+                  onChange={(e) => setSelectedWeekId(e.target.value || null)}
+                >
+                  <option value="">Select a week...</option>
+                  {data.weeks.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.weekLabel} - {formatDate(w.date)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedWeek && (
+                <div className="fin-checklist-scroll" style={{ marginTop: 10 }}>
                   <table className="fin-checklist-table">
                     <thead>
                       <tr>
                         <th className="fin-cl-name-col">Player</th>
-                        <th className="fin-cl-col">Front 9<br /><span className="fin-cl-amount">$5</span></th>
-                        <th className="fin-cl-col">Back 9<br /><span className="fin-cl-amount">$5</span></th>
-                        <th className="fin-cl-col">50/50<br /><span className="fin-cl-amount">$10</span></th>
-                        <th className="fin-cl-col">Hot Hole<br /><span className="fin-cl-amount">$1</span></th>
-                        <th className="fin-cl-col">Fines</th>
-                        <th className="fin-cl-col">Total</th>
+                        <th className="fin-cl-col">Front 9</th>
+                        <th className="fin-cl-col">Back 9</th>
+                        <th className="fin-cl-col">50/50</th>
+                        <th className="fin-cl-col">Hot Hole</th>
                       </tr>
                     </thead>
                     <tbody>
                       {playerNames.map((name) => {
                         const pay = selectedWeek.payments[name] || { front9: false, back9: false, fiftyFifty: false, hotHole: false };
-                        const fine = selectedWeek.fines[name] || 0;
-                        const totalOwed = 5 + 5 + (selectedWeek.fiftyFiftyEnabled ? 10 : 0) + 1 + fine;
                         return (
                           <tr key={name}>
                             <td className="fin-cl-name">{name}</td>
                             <td className="fin-cl-check">
-                              {isAdmin ? (
-                                <input
-                                  type="checkbox"
-                                  className="fin-checkbox"
-                                  checked={pay.front9}
-                                  onChange={() => togglePayment(selectedWeek.id, name, 'front9')}
-                                />
-                              ) : (
-                                <span className={pay.front9 ? 'fin-paid' : 'fin-unpaid'}>
-                                  {pay.front9 ? '✓' : '✗'}
-                                </span>
-                              )}
+                              <input type="checkbox" className="fin-checkbox" checked={pay.front9}
+                                onChange={() => togglePayment(selectedWeek.id, name, 'front9')} />
                             </td>
                             <td className="fin-cl-check">
-                              {isAdmin ? (
-                                <input
-                                  type="checkbox"
-                                  className="fin-checkbox"
-                                  checked={pay.back9}
-                                  onChange={() => togglePayment(selectedWeek.id, name, 'back9')}
-                                />
-                              ) : (
-                                <span className={pay.back9 ? 'fin-paid' : 'fin-unpaid'}>
-                                  {pay.back9 ? '✓' : '✗'}
-                                </span>
-                              )}
+                              <input type="checkbox" className="fin-checkbox" checked={pay.back9}
+                                onChange={() => togglePayment(selectedWeek.id, name, 'back9')} />
                             </td>
                             <td className="fin-cl-check">
                               {selectedWeek.fiftyFiftyEnabled ? (
-                                isAdmin ? (
-                                  <input
-                                    type="checkbox"
-                                    className="fin-checkbox"
-                                    checked={pay.fiftyFifty}
-                                    onChange={() => togglePayment(selectedWeek.id, name, 'fiftyFifty')}
-                                  />
-                                ) : (
-                                  <span className={pay.fiftyFifty ? 'fin-paid' : 'fin-unpaid'}>
-                                    {pay.fiftyFifty ? '✓' : '✗'}
-                                  </span>
-                                )
-                              ) : (
-                                <span className="fin-na">-</span>
-                              )}
+                                <input type="checkbox" className="fin-checkbox" checked={pay.fiftyFifty}
+                                  onChange={() => togglePayment(selectedWeek.id, name, 'fiftyFifty')} />
+                              ) : <span className="fin-na">-</span>}
                             </td>
                             <td className="fin-cl-check">
-                              {isAdmin ? (
-                                <input
-                                  type="checkbox"
-                                  className="fin-checkbox"
-                                  checked={pay.hotHole}
-                                  onChange={() => togglePayment(selectedWeek.id, name, 'hotHole')}
-                                />
-                              ) : (
-                                <span className={pay.hotHole ? 'fin-paid' : 'fin-unpaid'}>
-                                  {pay.hotHole ? '✓' : '✗'}
-                                </span>
-                              )}
+                              <input type="checkbox" className="fin-checkbox" checked={pay.hotHole}
+                                onChange={() => togglePayment(selectedWeek.id, name, 'hotHole')} />
                             </td>
-                            <td className={`fin-cl-fine${fine > 0 ? ' has-fine' : ''}`}>
-                              {fine > 0 ? `$${fine}` : '-'}
-                            </td>
-                            <td className="fin-cl-total">${totalOwed}</td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
                 </div>
-              </div>
-            </>
-          ) : (
+              )}
+            </div>
+          )}
+
+          {false && ( // placeholder to keep JSX structure
             <div className="empty-state">
               <div className="icon">&#128203;</div>
               <h2>No Week Selected</h2>

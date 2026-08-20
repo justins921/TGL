@@ -4195,6 +4195,11 @@ input, select {
   margin: 0;
 }
 
+.fin-checkbox-print {
+  font-size: 20px;
+  color: var(--text-secondary);
+}
+
 .fin-hothole-scoring {
   margin-top: 8px;
 }
