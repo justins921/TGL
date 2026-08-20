@@ -4195,6 +4195,34 @@ input, select {
   margin: 0;
 }
 
+.spin-add-guest {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--separator);
+}
+.spin-guest-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.spin-guest-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #2d6a4f;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.spin-guest-btn:disabled {
+  opacity: 0.4;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .spin-wheel-wrapper {

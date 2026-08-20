@@ -82,7 +82,7 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
   const [hotHoleResult, setHotHoleResult] = useState<string | null>(null);
   const [fiftyFiftyResult, setFiftyFiftyResult] = useState<string | null>(null);
 
-  // Derive player name list
+  // Derive player name list (non-subs only for fines/payments)
   const playerNames = useMemo(() => {
     return players
       .filter((p) => !p.isSub)
@@ -90,10 +90,37 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
       .map((p) => p.name);
   }, [players]);
 
-  // Players available for 50/50 wheel
+  // All players including subs for 50/50 wheel
+  const allPlayerNames = useMemo(() => {
+    return players
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((p) => p.name);
+  }, [players]);
+
+  // Sub names for default exclusion
+  const subNames = useMemo(() => {
+    return new Set(players.filter((p) => p.isSub).map((p) => p.name));
+  }, [players]);
+
+  // Initialize excluded with subs on first render
+  const [excludeInitialized, setExcludeInitialized] = useState(false);
+  if (!excludeInitialized && subNames.size > 0) {
+    setExcludedPlayers(new Set(subNames));
+    setExcludeInitialized(true);
+  }
+
+  // Guest players added for 50/50
+  const [guestPlayers, setGuestPlayers] = useState<string[]>([]);
+  const [newGuestName, setNewGuestName] = useState('');
+
+  // All names for 50/50 wheel (players + guests, minus excluded)
+  const fiftyFiftyAllNames = useMemo(() => {
+    return [...allPlayerNames, ...guestPlayers];
+  }, [allPlayerNames, guestPlayers]);
+
   const fiftyFiftyPlayers = useMemo(() => {
-    return playerNames.filter((n) => !excludedPlayers.has(n));
-  }, [playerNames, excludedPlayers]);
+    return fiftyFiftyAllNames.filter((n) => !excludedPlayers.has(n));
+  }, [fiftyFiftyAllNames, excludedPlayers]);
 
   // Derive foursome options from schedule data
   const foursomeOptions = useMemo(() => {
@@ -809,7 +836,7 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
             <div className="spin-player-filter">
               <div className="spin-filter-title">Players in the draw:</div>
               <div className="spin-filter-list">
-                {playerNames.map((name) => (
+                {fiftyFiftyAllNames.map((name) => (
                   <label key={name} className="spin-filter-item">
                     <input
                       type="checkbox"
@@ -824,9 +851,36 @@ export default function Finances({ isAdmin, players, scheduleData: _scheduleData
                         setFiftyFiftyResult(null);
                       }}
                     />
-                    <span>{name}</span>
+                    <span>{name}{subNames.has(name) ? ' (sub)' : ''}{guestPlayers.includes(name) ? ' (guest)' : ''}</span>
                   </label>
                 ))}
+              </div>
+              <div className="spin-add-guest">
+                <input
+                  className="spin-guest-input"
+                  type="text"
+                  placeholder="Add guest..."
+                  value={newGuestName}
+                  onChange={(e) => setNewGuestName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newGuestName.trim()) {
+                      setGuestPlayers((prev) => [...prev, newGuestName.trim()]);
+                      setNewGuestName('');
+                    }
+                  }}
+                />
+                <button
+                  className="spin-guest-btn"
+                  disabled={!newGuestName.trim()}
+                  onClick={() => {
+                    if (newGuestName.trim()) {
+                      setGuestPlayers((prev) => [...prev, newGuestName.trim()]);
+                      setNewGuestName('');
+                    }
+                  }}
+                >
+                  Add
+                </button>
               </div>
             </div>
             <SpinWheel
